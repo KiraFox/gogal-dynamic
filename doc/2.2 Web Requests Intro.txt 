@@ -1,0 +1,43 @@
+Web Requests Intro:
+-- web request : Whenever you click on a link or type a website into your 
+browser, your browser will send a message to the web application asking for 
+some specific page or set of data.
+	+  Once the server receives a web request, it will determine how to process 
+	it, and then send a response.
+	+  The browser then decides how to show the resulting data - typically by 
+	rendering it as HTML.
+-- URL path : This is the part after the web-site name. 
+	+  We focus on this part of a URL because this is how we determine what the 
+	user is trying to do.
+	+  For example, given the url http://www.lenslocked.com/signup the path 
+	would be the /signup portion.  If the path is /signup then we know to run 
+	our code that handles users trying to sign up. If instead the path is /news 
+	we know to run our code that handles displaying news articles.
+	+  Empty path is always set to "/", or the root path (home page).
+-- headers :  used to store things like metadata, cookies, and other data that 
+is generally useful for all web requests.
+	+  For example, after logging into your account many web applications store 
+	this data in a cookie, and then when you visit various pages of the website 
+	your browser includes this cookie in the headers of your requests. This 
+	allows the website to determine both that you are logged in, and which user 
+	you are.
+-- body : used to store user submitted data
+	+  For example, if you filled out a sign up form and hit the submit button, 
+	the browser would include the data you just typed into the form as part of 
+	the body so that the web application can process it.
+-- server response :  broken into two parts - headers and a body. The response 
+doesn’t need a URL because it is simply responding to your request. Similar to 
+requests, the headers are used to store mostly metadata that is useful to the 
+browser, and the body contains the data that was requested.
+-- HTTP status codes : When your web server responds to a request, it also 
+returns a status code.
+	+  return a 200 status code, which means that everything was successful
+	+  return a 400-499 status code when something goes wrong that was a result 
+	of bad data or a mistake in the client.
+	+  404 code: When a user attempts to visit a page that doesn’t exist. It 
+	should render a page telling the user that you couldn’t find the page the 
+	user was looking for. Remember that over time a lot of your users may see 
+	this page when they make a typo or any other mistake, and it is a great 
+	page to make an impression on them.
+-- routing : just a mapping of what page the user is trying to visit and what 
+code we want to handle that request.
