@@ -8,11 +8,12 @@ import (
 // Function now takes in new parameter (layout) so we can set this on the view
 // we are creating.
 func NewView(layout string, files ...string) *View {
-	// Add the bootstrap.gohtml layout to the slice of template files we are
+	// Add the navbar.gohtml layout to the slice of template files we are
 	// parsing so it is available for rendering.
 	files = append(files,
 		"views/layouts/footer.gohtml",
-		"views/layouts/bootstrap.gohtml")
+		"views/layouts/bootstrap.gohtml",
+		"views/layouts/navbar.gohtml")
 
 	// Use the ... operator after a variable name to “unravel” the items in a slice
 	// template.ParseFiles() expects strings, not a slice, so "files..." allows
