@@ -1,0 +1,53 @@
+Create Bootstrap Layout:
+-- Create template file "bootstrap.gohtml" in the views/layouts folder
+-- Insert a different layout depending on what page the user is visiting:
+	+  Render the same template (yield) from within our bootstrap layout so when
+	we want to change which page is rendered in our web app all we provide is
+	a new definition for the template (yield).
+	+  Update home and contact template files to be named template "yield"
+		{{define "yield"}}
+		<h1>Welcome to my awesome site!</h1>
+
+		{{template "footer"}}
+		{{end}}
+	+  Update bootstrap template: (use . after template name so data can be passed
+	from the bootstrap template to the yield template)
+		<div class="container-fluid">
+		{{template "yield" .}}
+		</div>
+	+  Store the named template (layout) inside of the View type ;  this tells 
+	our template to execute those named templates so the contents will be rendered
+		type View struct {
+		Template *template.Template
+		Layout   string
+		}
+	+  Update home/contact functions to use the layout when executing templates
+		func home(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		err := homeView.Template.ExecuteTemplate(w, homeView.Layout, nil)
+		if err != nil {
+		panic(err)
+		}
+		}
+	+  Set the Layout field for the views by updating NewView function:
+		-- Accept layout parameter so we can set this on the view we create
+		-- Add bootstrap layout to slice of template files that are parsing so
+		it is available for rendering
+
+		func NewView(layout string, files ...string) *View {
+		files = append(files, "views/layouts/footer.gohtml",
+		"views/layouts/bootstrap.gohtml")
+		t, err := template.ParseFiles(files...)
+		if err != nil {
+		panic(err)
+		}
+
+		return &View{
+		Template: t,
+		Layout:   layout,
+		}
+		}
+	+  Update code that uses NewView function:
+		func main() {
+		homeView = views.NewView("bootstrap", "views/home.gohtml")
+		contactView = views.NewView("bootstrap", "views/contact.gohtml")

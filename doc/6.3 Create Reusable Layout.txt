@@ -1,4 +1,4 @@
-Create Reusable Bootstrap Layout :
+Create Reusable Layout :
 -- Create Views that allow reusing templates (such as nav bar and footer)
 -- Named templates
 	+  Go's template library allows you to define a name for your template so

@@ -3,22 +3,20 @@ package main
 import (
 	"fmt"
 	"net/http"
-	// Import the views package to use the new view type created
+
 	"github.com/KiraFox/gogal-dynamic/views"
 
 	"github.com/gorilla/mux"
 )
 
-// Update global variables to be a pointer to a View (*View) instead of template
-// and change names to reflect what they are now (views instead of templates)
 var homeView *views.View
 var contactView *views.View
 
 func main() {
-	// Update to use the NewView function we created to parse the corresponding
-	// templates and create our views.
-	homeView = views.NewView("views/home.gohtml")
-	contactView = views.NewView("views/contact.gohtml")
+	// Update to use the layout parameter and set the Layout field in our View
+	// type.
+	homeView = views.NewView("bootstrap", "views/home.gohtml")
+	contactView = views.NewView("bootstrap", "views/contact.gohtml")
 
 	var nf http.Handler
 	nf = http.HandlerFunc(notFound)
@@ -33,10 +31,10 @@ func main() {
 // This is the function the router calls when a user visits the "home" page.
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	// Update to use the view variables instead of previous template variables.
-	// Access the Template field of each view object (View struct) instead of
-	// directly referencing the template.
-	if err := homeView.Template.Execute(w, nil); err != nil {
+	// Update to ExecuteTemplate of the new Layout template stored in our View
+	// type.
+	err := homeView.Template.ExecuteTemplate(w, homeView.Layout, nil)
+	if err != nil {
 		panic(err)
 	}
 }
@@ -44,10 +42,10 @@ func home(w http.ResponseWriter, r *http.Request) {
 // This is the function the router calls when a user visits the "contact" page.
 func contact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	// Update to use the view variables instead of previous template variables.
-	// Access the Template field of each view object (View struct) instead of
-	// directly referencing the template.
-	if err := contactView.Template.Execute(w, nil); err != nil {
+	// Update to ExecuteTemplate of the new Layout template stored in our View
+	// type.
+	err := contactView.Template.ExecuteTemplate(w, contactView.Layout, nil)
+	if err != nil {
 		panic(err)
 	}
 }
