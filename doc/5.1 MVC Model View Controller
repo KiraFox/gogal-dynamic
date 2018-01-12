@@ -1,0 +1,41 @@
+MVC - Model View Controller :
+-- architectural pattern that is designed to help organize applications by 
+separating code based on what it is responsible for, and then relying on 
+developers to make sure the correct code is put in each package. Specifically, 
+the MVC pattern introduces three distinct roles that code can fall under:
+-- View : responsible for rendering data.
+	+  Given a specific page that we want to render, and data for that page, 
+	our view is responsible for generating the correct output.
+	+  Code in "view" should have as little logic going on as possible and 
+	should focus entirely on displaying data.
+	+  Can use this area for common layouts shared across an app
+-- Controllers : handle most of the business logic that happens behind the scene
+	+  Won't directly create views or update data in a database but will use
+	views and models to do these things.
+	+  Shouldn't have too much logic in it but instead will pass data around to
+	different pieces of your app that actually handle performing whatever work
+	needs to be done
+-- Models : responsible for interacting with your raw data
+	+  Typically means interacting with database but also can mean interacting
+	with APIs data or data from another service
+	+  For example, our web application is going to have user accounts, and we
+	will represent them in a database as user objects. To access this data, we 
+	will create a User model that is representative of that data in our database, 
+	and handles doing things like updating a user’s contact information in the 
+	database.
+-- DOES NOT mean that we need to put all of our code in these three categories.
+
+Web Request flow chart using MVC:
+
+Example: user is attempting to update contact information
+
+1. User submits update to contact info on the webpage
+2. Router decides which Controller to use (in this case, UserController)
+3. UserController decides whick Model to use (in this case, User model)
+4. User model updates the database
+5. User model takes the updated information from the database and stores it in
+	a "user object" to give the UserController to use
+6. UserController takes the returned updated "user object" and decides which View
+	to return to the user (in this case, ShowUser)
+7. ShowUser view renders the updated "user object" to the end user
+8. End user sees the updated User page in the browser
