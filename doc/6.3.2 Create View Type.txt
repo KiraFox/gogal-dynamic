@@ -1,0 +1,23 @@
+Create View Type :
+-- Use instead of parsing named templates every time you parse a normal template
+so that it simplifies code and is easier to maintain
+	+ We create a View type to handle this logic for us
+-- Create new Go source file "view.go" in "views" folder
+	+ Create our View type (Go has "types" of variables and this is creating our
+	own custom one): This will be a struct (View) that contains one attribute - 
+	a pointer to a template.Template which will eventually point to our compiled 
+	template. This will change over time but it needs to store the parsed 
+	template we want to Execute.
+	+ Create a function (NewView) to make it easier to create Views. This 
+	function is going to handle appending common template files to the list of
+	files provided, then it will parse those template files, and finally it will
+	construct the pointer to our View type (*View) for us and return it.
+-- Update main.go file to use View type:
+	+ Import the views package (folder)
+	+ Switch the global variables to be type *View and change the names to 
+	reflect what they are now
+	+ Update main function to handle constructing our views using the NewView
+	function
+	+ Update home and contact functions to use the view variables. Instead of 
+	directly referencing the template we are going to access the Template field
+	of each view object (View struct).
