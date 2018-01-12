@@ -1,0 +1,40 @@
+Globbing :
+-- way of telling computer which files you want and which files you want to 
+ignore (ex: *.txt)
+-- Main things about globbing:
+	1. The asterisk (*) is used to match against any number of characters, even
+	none, no matter what character they are.
+	2. Most other characters (like each character in .txt) will look for an exact
+	match.
+	3. Globbing requires a complete match. For example, *.txt would not match 
+	the file test.txte because nothing matches the final “e” in the file. If we
+	added a second asterisk (*) at the end of our pattern it would work, but 
+	without it we don’t have a match.
+-- path/filepath package : useful for manipulating/using filepaths without 
+having to write operating system specific code
+	+  Glob function: given a glob pattern it will return a slice of file paths
+	(in form of string slice) that match the glob pattern; Usefule when wanting
+	to include all of the files in a particular directory that match a pattern
+		-- Create global variables to help construct Glob pattern
+			var (
+			LayoutDir string = "views/layouts/"
+			TemplateExt string = ".gohtml"
+			)
+
+			+  LayoutDir helps by specifying the layout directory
+			+  TemplateExt tells what extension we expect template files to match
+		-- Create function to use the variables & Glob function then return slice
+		of templates to include in our view
+			func layoutFiles() []string {
+			files, err := filepath.Glob(LayoutDir + "*" + TemplateExt)
+			if err != nil {
+			panic(err)
+			}
+
+			return files
+			}
+		-- Change NewView to use the new function : instead of passing individual
+		files to append, we are going to pass all the files returned by layoutFiles
+			func NewView(layout string, files ...string) *View {
+			files = append(files, layoutFiles()...)
+			// ...
