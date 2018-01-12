@@ -1,0 +1,29 @@
+Simplifying View Rendering:
+-- Views should contain all of the logic for rendering pages (not functions in
+the main file).
+-- Moving ExecuteTemplate out of the handler functions and into our View type so
+that the logic is handled there per MVC.
+	+ Create method in view.go file that is responsible for rendering the view:
+	This removes rendering logic in our handlers.
+
+	func (v *View) Render(w http.ResponseWriter, data interface{}) error {
+	return v.Template.ExecuteTemplate(w, v.Layout, data)
+	}
+
+ 	+ Call the method in the handlers: (create helper function to panic on errors)
+	
+	func must(err error) {
+	if err != nil {
+		panic(err)
+	}
+	}
+
+	func home(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+	must(homeView.Render(w, nil))
+	}
+
+	func contact(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+	must(contactView.Render(w, nil))
+	}

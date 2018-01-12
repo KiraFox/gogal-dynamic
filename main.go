@@ -13,8 +13,7 @@ var homeView *views.View
 var contactView *views.View
 
 func main() {
-	// Update to use the layout parameter and set the Layout field in our View
-	// type.
+
 	homeView = views.NewView("bootstrap", "views/home.gohtml")
 	contactView = views.NewView("bootstrap", "views/contact.gohtml")
 
@@ -31,20 +30,21 @@ func main() {
 // This is the function the router calls when a user visits the "home" page.
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	// Update to ExecuteTemplate of the new Layout template stored in our View
-	// type.
-	err := homeView.Template.ExecuteTemplate(w, homeView.Layout, nil)
-	if err != nil {
-		panic(err)
-	}
+	// Update to remove ExecuteTemplate and use the Render method for handling
+	// logic for rendering views
+	must(homeView.Render(w, nil))
 }
 
 // This is the function the router calls when a user visits the "contact" page.
 func contact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	// Update to ExecuteTemplate of the new Layout template stored in our View
-	// type.
-	err := contactView.Template.ExecuteTemplate(w, contactView.Layout, nil)
+	// Update to remove ExecuteTemplate and use the Render method for handling
+	// logic for rendering views
+	must(contactView.Render(w, nil))
+}
+
+// Helper function to check for errors and panic if one is found
+func must(err error) {
 	if err != nil {
 		panic(err)
 	}

@@ -2,36 +2,31 @@ package views
 
 import (
 	"html/template"
-	"path/filepath" // Use for Globbing
+	"net/http"
+	"path/filepath"
 )
 
-// Create global variables to help construct Glob pattern
-// Technically these can be constants but leave them as variables in case we
-// want to test this code with different values later.
 var (
-	LayoutDir   string = "views/layouts/" // Specifies layout directory
-	TemplateExt string = ".gohtml"        // Specifies file extension for templates
+	LayoutDir   string = "views/layouts/"
+	TemplateExt string = ".gohtml"
 )
 
-// Create function to use the variables & Glob function then return slice
-// of templates to include in our view
+// Function is used to put all template layout files from specific directory and
+// of a certain file type into a slice.
 func layoutFiles() []string {
 
-	// Pass in a string to the Glob function that we create via combining
-	// variables and a hard-coded * string (="views/layouts/*.gohtml").
 	files, err := filepath.Glob(LayoutDir + "*" + TemplateExt)
 	if err != nil {
 		panic(err)
 	}
 
-	// Return all of the file paths we receive from our call to Glob
 	return files
 }
 
-// Simplify funcation to use the new Glob function (layoutFiles)
+// Function is used to populate our View type with the parsed template layout
+// files gathered by the layoutFiles function and the name of the layout used.
 func NewView(layout string, files ...string) *View {
-	// Instead of hard-coding individual files to append, we pass in all the
-	// files returned by layoutFiles
+
 	files = append(files, layoutFiles()...)
 
 	t, err := template.ParseFiles(files...)
@@ -45,10 +40,17 @@ func NewView(layout string, files ...string) *View {
 	}
 }
 
-// Declaring our View type
-// Add new field Layout to store the name of the template we want the view to
-// Execute
+// Declaring our View type to hold pointer to parsed templates and name of layout
+// of the webpage
 type View struct {
 	Template *template.Template
 	Layout   string
+}
+
+// Create render method for View type
+// This renders the view of the webpage and handles the logic so it can be used
+// by the handler functions instead of the logic being coded in the handlers.
+// The data parameter will be used in the future.
+func (v *View) Render(w http.ResponseWriter, data interface{}) error {
+	return v.Template.ExecuteTemplate(w, v.Layout, data)
 }
