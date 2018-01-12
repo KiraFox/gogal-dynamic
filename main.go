@@ -8,19 +8,24 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// Using MVC : Create first View and Template
-// Create global variable to store the parsed template for home page instead of
-// using Fprint in the "home" func. Will be cleaned up later.
 var homeTemplate *template.Template
+var contactTemplate *template.Template
 
 func main() {
 
 	var err error
-	// Make sure global variable is assigned to the parsed template
-	// Template paths are relative. Note that the file paths used to access them
-	// are relative to wherever you run your code.
-	// Parsing files can cause issues (return error) so check for errors
-	homeTemplate, err = template.ParseFiles("views/home.gohtml")
+	// Alter both ParseFiles for home and contact templates so both Views can
+	// use (access) the new footer template layout.
+	homeTemplate, err = template.ParseFiles(
+		"views/home.gohtml",
+		"views/layouts/footer.gohtml")
+	if err != nil {
+		panic(err)
+	}
+
+	contactTemplate, err = template.ParseFiles(
+		"views/contact.gohtml",
+		"views/layouts/footer.gohtml")
 	if err != nil {
 		panic(err)
 	}
@@ -38,11 +43,7 @@ func main() {
 // This is the function the router calls when a user visits the "home" page.
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	// Update function to use (Execute) new template (homeTemplate)
-	// We write the results to our Response Writer (w), and don't give any data
-	// to the template to use (data = nil) as the template doesn't currently
-	// use any dynamic data
-	// Executing templates can cause issues (return error) so check for errors
+
 	if err := homeTemplate.Execute(w, nil); err != nil {
 		panic(err)
 	}
@@ -51,9 +52,10 @@ func home(w http.ResponseWriter, r *http.Request) {
 // This is the function the router calls when a user visits the "contact" page.
 func contact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(w, "To get in touch, please send an email "+
-		"to <a href=\"mailto:support@lenslocked.com\">"+
-		"support@lenslocked.com</a>.")
+
+	if err := contactTemplate.Execute(w, nil); err != nil {
+		panic(err)
+	}
 }
 
 // This is the function for a custom 404 status page.

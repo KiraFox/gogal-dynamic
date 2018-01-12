@@ -1,0 +1,43 @@
+Create Reusable Bootstrap Layout :
+-- Create Views that allow reusing templates (such as nav bar and footer)
+-- Named templates
+	+  Go's template library allows you to define a name for your template so
+	you can use it elsewhere
+	+  Name must be unique!
+	+  Start named template code with {{define "name-here"}} and close it with
+	{{end}}
+	+  To use in another template, input the code {{template "name-here"}} where
+	you want the named template contents to run/show
+-- Create new folder "Layouts" inside the "Views" folder to store shared layout
+templates
+	+  Create new file "footer.gohtml" for a shared footer 
+	{{define "footer"}}
+	<footer>
+		<p>
+			Copyright 2016 lenslocked.com
+		</p>
+	</footer>
+	{{end}}
+-- Change main.go and views files to use new layout:
+	+  Need to ParseFiles on the layout file (on all current templates):  
+		
+		homeTemplate, err = template.ParseFiles("views/home.gohtml",
+		"views/layouts/footer.gohtml")
+		if err != nil {
+			panic(err)
+		}
+	+  We now have access to the named “footer” template inside of our home and 
+	contact templates. Need to update our html code so that it knows to also 
+	render the footer template:
+
+		contact.gohtml :
+		To get in touch, please send an email to
+		<a href="mailto:support@lenslocked.com">support@lenslocked.com</a>
+
+		{{template "footer"}}
+
+-- Passing data to named templates :
+	+ need to provide additional argument in your code
+	+ {{template "footer" .}} : the period means pass all of the data we have 
+	to the footer template.
+	+ {{template "footer" .Name}} : is passing a specific piece of data (Name)
