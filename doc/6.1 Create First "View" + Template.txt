@@ -1,0 +1,23 @@
+Create First "View" + Template:
+
+-- Create folder called "views" under main project folder
+-- Create first template for the home page in "views" folder:
+	+ Create new document called "home.gohtml" 
+	+ Input HTML code for the home page
+-- Render template instead of writing string directly with Fprint
+	+ Create global variable to store the parsed template then use the template 
+	inside our "home" function
+	+ This will be cleaned up later.  Try not to use global variables as they
+	can cause issues and be hard to test.
+	+ Make sure this variable gets assigned to a parsed template 
+-- Update home function so that it uses the new template
+	+ Use Execute method to write results to the ResponseWriter instead of 
+	Stdout so it will be returned to the user making the web request.
+	+ Added error handling incase the Execute runs into issues such as it might
+	try to access a variable we didn't provide
+	+ Passing nil to Execute because the template doesn't currently use any 
+	dynamic data so we are passing "no data" == nil
+-- Stop and restart application to see changes on webpage:
+	+ Application only parses the template once when it starts up
+	+ Can be tedious during development but speeds up production because it 
+	doesn't need to reread template files every time a user visits a page
