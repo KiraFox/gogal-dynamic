@@ -1,0 +1,19 @@
+{{define "yield"}}
+<form>
+	<div class="form-group">
+		<label for="email">Email address</label>
+		<!-- "Name" of each input field is used as a key and Information user 
+		typed into the field is used as the value
+	+  Ex: setting the "name" attribute to "email" means we want the key for the
+		input field to be "email" when submitted to our server-->
+		<input type="email" name="email" class="form-control" id="email"
+			placeholder="Email">
+	</div>
+	<div class="form-group">
+		<label for="password">Password</label>
+		<input type="password" name="password" class="form-control" id="password"
+			placeholder="Password">
+	</div>
+	<button type="submit" class="btn btn-default">Sign Up</button>
+</form>
+{{end}}

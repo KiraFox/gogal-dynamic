@@ -1,0 +1,36 @@
+Bootstrap Intro:
+-- When you submit a form to a server, it recieves data in format similar to a map
+	+  Name of each input field is used as a key in the map
+	+  Information user typed into the field is used as the value
+	+  Ex: setting the "name" attribute to "email" means we want the key for the
+		input field to be "email" when submitted to our server
+-- Panels in Bootstrap : wrap contents in a container to make it more obvious
+	that everything in the container is related
+	+  Will be using panel to make clear which fields are used in sign up form
+-- Grid system in Bootstrap : allows to define rows and columns, which give a 
+	way to layout page
+	+  Use to define how large we want signup form to be depending on the user's
+		screen size
+	+  First create a row then place columns ; there are 12 in the grid system
+		-- Going to set signup form to take up 4 columns on md or larger screens
+		-- Offset left by 4 columns so signup form is center
+		-- <div class="row">
+			<div class="col-md-4 col-md-offset-4">
+-- Colors in Bootstrap : comes with a few base contextual colors that can be used
+	on nearly any bootstrap element
+	+  Color is named by context
+	CSS Class / name 	Default Color
+	Default 			white/gray
+	primary 			blue
+	success 			green
+	info 				light blue
+	warning 			yellow
+	danger 				red
+	+  Ex: <div class="panel panel-primary"> ((primary is the color))
+		<div class="panel-heading">
+-- Media sizes : general rule that anyone on screen size md (medium) or larger is
+	viewing your site on computer or tablet
+-- Adding right navbar content: 
+	<ul class="nav navbar-nav navbar-right">
+	<li><a href="/signup">Sign Up</a></li>
+	</ul>
