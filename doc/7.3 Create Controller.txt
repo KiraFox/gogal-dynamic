@@ -1,0 +1,54 @@
+7.3 Create Controller:
+-- Handler functions are often reffered to as actions
+-- Controller (Users) will contain all of the handler functions for pages that
+	interact with the resource (users).
+	+  Ex: Have an edit page for users to update information and when user visits
+		the page the rewuest would be processed by the handlers inside the user
+		controller
+-- Instead of a function being declared in main.go, they will be a methods
+	attached to a "type" that we will be declaring in inside of the "controllers" 
+	package
+	+  Impact on code becomes larger later as we can share views and database
+		connections with our controllers, and it helps keep code organized and
+		easier to test.
+-- Create "controllers" package:
+	+  Create new directory for the package (controllers), like we did for "views"
+	+  Create new file (users.go) to create new "type" (type Users struct) for
+		the specific controller you want to create (Users).
+		-- Name the "type" clearly so you know which controller is being used
+			in your code later (controllers.User). 
+--  Organize "views" folder to have specific views stored in a sub-directory
+	with the same name as the controller they relate to, and to name them 
+	something similar to the action that uses the view created with the template
+	+  Ex: views folder -> users folder (related to user controller) -> 
+		new.gohtml (view template of "new" user sign up form)
+-- Tell Users controller about the view/template (new.gohtml) :
+	+  Store a view on the users controller that points to the template so 
+		controller doesn't handle executing template but uses the Render method
+
+		type Users struct{
+		NewView *views.View
+		}
+
+	+  Create view using the NewView function and new user template:
+
+		func NewUsers() *Users {
+			return &Users{
+			NewView: views.NewView("bootstrap", "views/users/new.gohtml"),
+			}
+		}
+
+		-- call the NewView function and give it the layout and template we want
+		-- this created view is assigned to the NewView field of Users struct
+		-- then the Users controller is returned
+	+  Create handler (action/method) to handle web requests to the sign up page
+		
+		func (u *Users) New(w http.ResponseWriter, r *http.Request) {
+			if err := u.NewView.Render(w, nil); err != nil {
+			panic(err)
+			}
+		}
+
+		-- method is named New because it is used to create a new user
+		-- method is going to be associated with Users struct so it can have
+			access to the NewView field

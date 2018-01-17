@@ -1,0 +1,23 @@
+7.2 REST Intro:
+-- Architectural style for developing software and networked systems
+-- Model most pieces of web app around resources (ex: user, gallery, image)
+	+  Things that can be created/read/updated/deleted (CRUD)
+	+  Use as a guideline as you create models/controllers/views
+	+  Shouldn’t get caught up in trying to find the perfect resource 
+	representation of everything in your application especially if harder to
+	understand or maintain
+-- HTTP request methods:
+	HTTP Method 		What it signifies
+	GET 				Reading a resource
+	POST 				Creating a resource
+	PUT 				Updating a resource
+	PATCH 				Updating a resource
+	DELETE 				Deleting a resource
+	+  Help dictate intent when you make a web request
+	+  Used in conjunction with paths in our web app and paths help determine 
+		what controlers we should be creating
+	+  PUT accepts an entirely new representation of an object even if some
+	fields remained the same
+	+  PATCH only accepts provides only updated fields to a resource
+	+  Ex: Galleries resource will have a controller, model, and views that will
+	be organized in the galleries folder
