@@ -17,20 +17,26 @@
 		the specific controller you want to create (Users).
 		-- Name the "type" clearly so you know which controller is being used
 			in your code later (controllers.User). 
---  Organize "views" folder to have specific views stored in a sub-directory
-	with the same name as the controller they relate to, and to name them 
-	something similar to the action that uses the view created with the template
-	+  Ex: views folder -> users folder (related to user controller) -> 
-		new.gohtml (view template of "new" user sign up form)
--- Tell Users controller about the view/template (new.gohtml) :
+--  Re-Organize "views" folder:
+	+  Introduce organization patterns for templates/views as early as possible
+	+  Create sub-folders in "views" folder named the same as the controller
+		they relate to ("users" folder in "views")
+	+  Name the individual files in the sub-folder something similar to the 
+		action that uses the view created with the template
+		--  Ex: views folder -> users folder (related to user controller) -> 
+			new.gohtml (view template of "new" user sign up form)
+	+  Going forward name the templates based on the action they relate to in
+		our code ("Edit" action corresponds to edit.gohtml template file)
+-- Tell Users controller about the view/template (new.gohtml):
 	+  Store a view on the users controller that points to the template so 
-		controller doesn't handle executing template but uses the Render method
+		controller doesn't handle executing template but uses the Render method:
 
 		type Users struct{
 		NewView *views.View
 		}
 
-	+  Create view using the NewView function and new user template:
+	+  Create a function to handle the logic of setting up the view (NewView)
+		stored in the controllers:
 
 		func NewUsers() *Users {
 			return &Users{
@@ -41,7 +47,8 @@
 		-- call the NewView function and give it the layout and template we want
 		-- this created view is assigned to the NewView field of Users struct
 		-- then the Users controller is returned
-	+  Create handler (action/method) to handle web requests to the sign up page
+	+  Create handler (action/method) to handle web requests to the Sign Up 
+		("new" users) page:
 		
 		func (u *Users) New(w http.ResponseWriter, r *http.Request) {
 			if err := u.NewView.Render(w, nil); err != nil {
@@ -52,3 +59,21 @@
 		-- method is named New because it is used to create a new user
 		-- method is going to be associated with Users struct so it can have
 			access to the NewView field
+-- Connect Users controller to the router :
+	+  Remove old code that is now incorporated into the controller (signupView
+		variable, signup handler function, etc)
+	+  Import the controllers package in main.go
+	+  Create a users controller and assign it to a varaible inside func main()
+		usersC := controllers.NewUsers()
+	+  Use the New method on the Users controller variable as a handler function
+		passed to the router
+
+		r.HandleFunc("/signup", usersC.New)
+
+		** we are passing the New method as an argument to HandleFuc
+	+  New mthod has access to any data stored on the Users struct
+-- When adding a new page, ask what controller it should be a part of
+	+  Ex: process sign up form -> creates new user -> should probably go to 
+		users controller
+-- Common controller actions : CRUD (create, read, update, delete) so that users
+	can perform these actions on a resource (image/post/etc)

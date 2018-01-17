@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/KiraFox/gogal-dynamic/controllers"
 	"github.com/KiraFox/gogal-dynamic/views"
 
 	"github.com/gorilla/mux"
@@ -11,14 +12,13 @@ import (
 
 var homeView *views.View
 var contactView *views.View
-var signupView *views.View // Adding Sign Up page/form
 
 func main() {
 
 	homeView = views.NewView("bootstrap", "views/home.gohtml")
 	contactView = views.NewView("bootstrap", "views/contact.gohtml")
-	// Initialize new Sign Up page
-	signupView = views.NewView("bootstrap", "views/signup.gohtml")
+	// Create Users Controller variable and set it to NewUser function
+	usersC := controllers.NewUsers()
 
 	var nf http.Handler
 	nf = http.HandlerFunc(notFound)
@@ -26,7 +26,11 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/", home)
 	r.HandleFunc("/contact", contact)
-	r.HandleFunc("/signup", signup)
+	// Update signup webpage to use the User Controller var and run the method
+	// New for "new" users.  The method will handle any web requests for the
+	// signup page now.  The router can use the method because it uses the
+	// arguments of type ResponseWrite and Request.
+	r.HandleFunc("/signup", usersC.New)
 	r.NotFoundHandler = nf
 	http.ListenAndServe(":3000", r)
 }
@@ -41,12 +45,6 @@ func home(w http.ResponseWriter, r *http.Request) {
 func contact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	must(contactView.Render(w, nil))
-}
-
-// This is the function the router calls when a user visits the "signup" page.
-func signup(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
-	must(signupView.Render(w, nil))
 }
 
 // Helper function to check for errors and panic if one is found
