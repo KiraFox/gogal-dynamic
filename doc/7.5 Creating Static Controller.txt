@@ -1,0 +1,76 @@
+7.5 Creating Static Controller :
+-- Create one controller to hold all of the mostly static pages -contact/faq/etc
+-- Move templates for static pages into new folder named static (like users)
+	so all webpage templates that will be attached to static controller are there
+-- Create static controller:
+		func NewStatic() *Static {
+			return &Static{
+			Home:    views.NewView("bootstrap", "views/static/home.gohtml"),
+			Contact: views.NewView("bootstrap", "views/static/contact.gohtml"),
+			}
+		}
+
+		type Static struct {
+			Home    *views.View
+			Contact *views.View
+		}
+-- Redo the handler functions and router for the static pages:
+	+ Since the current handler functions only set a content type and render a
+		view, we are going to try to do those things inside code we already
+		have to keep it DRY
+	+ Set the content type when rendering : update the exisiting Render method
+		to also set the content type of the page when it executes the templates.
+
+		func (v *View) Render(w http.ResponseWriter, data interface{}) error {
+			w.Header().Set("Content-Type", "text/html")
+			return v.Template.ExecuteTemplate(w, v.Layout, data)
+		}
+
+	+ Handle() function in router can be used instead of having separate handler
+		functions in the static controller : 
+		-- mux.Router Handle() needs a path (/contact) and http.Handler object ; 
+			which means we can only put in something that has a method corresponding
+			to it that is a ServeHTTP(ResponseWriter,*Request)
+		-- create new method for View type that receives an http response writer 
+			and a request
+
+		func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+			if err := v.Render(w, nil); err != nil {
+				panic(err)
+			}
+		}
+
+	+ Now views.VIew implements the http.Handler interface we update main.go
+		staticC := controllers.NewStatic()
+		r := mux.NewRouter()
+		r.Handle("/", staticC.Home).Methods("GET")
+		r.Handle("/contact", staticC.Contact).Methods("GET")
+-- Simplifying NewView creations:
+	+ Add variable that stores the template directory 
+		TemplateDir string = "views/"
+	+ Create function that takes in files and adds the directory and extension:
+		func addTempPathExt(files []string) {
+			for i, f := range files {
+				files[i] = TemplateDir + f + TemplateExt
+			}
+		}
+	+ Add created function to the NewView function to use it:
+		func NewView(layout string, files ...string) *View {
+			addTempPathExt(files)
+			files = append(files, layoutFiles()...)
+			t, err := template.ParseFiles(files...)
+			if err != nil {
+				panic(err)
+			}
+
+			return &View{
+				Template: t,
+				Layout:   layout,
+			}
+		}
+	+ Update controllers to pass in only the needed folder and file names:
+		func NewUsers() *Users {
+			return &Users{
+				NewView: views.NewView("bootstrap", "users/new"),
+			}
+		}
