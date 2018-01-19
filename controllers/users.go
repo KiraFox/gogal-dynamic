@@ -5,6 +5,9 @@ import (
 	"net/http"
 
 	"github.com/KiraFox/gogal-dynamic/views"
+
+	//Using this package to help parse the signup form
+	"github.com/gorilla/schema"
 )
 
 // This is the controller for the "users" resource
@@ -30,19 +33,35 @@ func (u *Users) New(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// This method is used to process the signup form when a user tries to create
+// This method is used to process the Signup form when a user tries to create
 // a new user account.
 // POST /signup
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
-	// When form is submitted to your web application it will be included in
-	// part of the http.Request parameter (r) that is passed into your handler
-	// function. Therefor we can call a method ParseForm on the request to parse
-	// the information that is then stored in a map. We retrieve the information
-	// in the map using the ["key"] syntax and the keys are based on the "name"
-	// we have set in the new users template in the form HTML code.
+	// Need to parse the form that is POSTed as part of our http.Request when the
+	// Signup form is submitted; otherwise the form is ignored when submitted
+	// and we have no values to work with.
 	if err := r.ParseForm(); err != nil {
 		panic(err)
 	}
-	fmt.Fprintln(w, r.PostForm["email"])
-	fmt.Fprintln(w, r.PostForm["password"])
+	// Intialize a decoder from the schema package to use on the parsed form.
+	dec := schema.NewDecoder()
+	// Intialize a SignupForm so we have a destination for the parsed and decoded
+	// form information.
+	form := SignupForm{}
+	// Run the decoder using the Decode method and give it the destination (&form)
+	// where you want the decoded parsed form information stored and the source
+	// (r.PostForm) you want to decode to begin with.
+	if err := dec.Decode(&form, r.PostForm); err != nil {
+		panic(err)
+	}
+
+	fmt.Fprintln(w, form)
+}
+
+// This is the struct to hold the information submitted using the Signup form
+type SignupForm struct {
+	// Use struct tags so gorilla/schema package knows about the input fields
+	// in the Signup form.
+	Email    string `schema:"email"`
+	Password string `schema:"password"`
 }

@@ -41,9 +41,13 @@
 		-- PostForm is a map[string] []string behind the scenes so we can access 
 			the fields stored in PostForm using the ["key"] syntax
 -- Parse the POST form using gorilla/schema:
-	+  Using this instead of manually parsing data
+	+  Using this instead of manually parsing data (as that has more areas for
+		possibly introducing bugs)
 	+  Schema package designed to make it easier to convert values into Go struct
 		including doing common type conversions before assigning to a struct field
+		-- Ex: if our struct field had a type of int then the gorilla/schema
+			package would convert the form value into an integer before assigning
+			it to the struct field
 	+  Create a struct to store the form information into in the users.go file
 
 		type SignupForm struct {
