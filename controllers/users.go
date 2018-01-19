@@ -34,5 +34,15 @@ func (u *Users) New(w http.ResponseWriter, r *http.Request) {
 // a new user account.
 // POST /signup
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Temporary response")
+	// When form is submitted to your web application it will be included in
+	// part of the http.Request parameter (r) that is passed into your handler
+	// function. Therefor we can call a method ParseForm on the request to parse
+	// the information that is then stored in a map. We retrieve the information
+	// in the map using the ["key"] syntax and the keys are based on the "name"
+	// we have set in the new users template in the form HTML code.
+	if err := r.ParseForm(); err != nil {
+		panic(err)
+	}
+	fmt.Fprintln(w, r.PostForm["email"])
+	fmt.Fprintln(w, r.PostForm["password"])
 }

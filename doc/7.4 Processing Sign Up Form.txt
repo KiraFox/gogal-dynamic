@@ -17,8 +17,10 @@
 		{{define "signupForm"}}
 		<form action="/signup" method="POST">
 -- Parse the POST form using Golang:
+	+  Parse the sign up form so that we can use the submitted data to create a 
+		new user.
 	+  When a form is submitted to your web application it will be included in
-		the web request the use is making ; part of the http.Request parameter
+		the web request the user is making ; part of the http.Request parameter
 		that is passed into your handler function
 		-- before you can access the form you need to parse it ; call ParseForm
 			method (in Go library) on the http.Request passed into your handler
