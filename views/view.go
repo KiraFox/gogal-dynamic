@@ -8,6 +8,7 @@ import (
 
 var (
 	LayoutDir   string = "views/layouts/"
+	TemplateDir string = "views/"
 	TemplateExt string = ".gohtml"
 )
 
@@ -23,10 +24,19 @@ func layoutFiles() []string {
 	return files
 }
 
+// Function that takes in files and adds the template directory and extension
+func addTempPathExt(files []string) {
+	for i, f := range files {
+		files[i] = TemplateDir + f + TemplateExt
+	}
+}
+
 // Function is used to populate our View type with the parsed template layout
 // files gathered by the layoutFiles function and the name of the layout used.
 func NewView(layout string, files ...string) *View {
-
+	// Call function to add template path and file extention to all the files
+	// being used to create a View
+	addTempPathExt(files)
 	files = append(files, layoutFiles()...)
 
 	t, err := template.ParseFiles(files...)

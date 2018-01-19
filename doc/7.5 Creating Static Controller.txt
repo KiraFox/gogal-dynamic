@@ -45,10 +45,13 @@
 		r := mux.NewRouter()
 		r.Handle("/", staticC.Home).Methods("GET")
 		r.Handle("/contact", staticC.Contact).Methods("GET")
--- Simplifying NewView creations:
+-- Simplifying NewView creations and Controllers:
 	+ Add variable that stores the template directory 
 		TemplateDir string = "views/"
 	+ Create function that takes in files and adds the directory and extension:
+		-- This because we won't be storing any view files outside the view
+			directory or using another file format besides .gohtml
+
 		func addTempPathExt(files []string) {
 			for i, f := range files {
 				files[i] = TemplateDir + f + TemplateExt
@@ -68,7 +71,9 @@
 				Layout:   layout,
 			}
 		}
-	+ Update controllers to pass in only the needed folder and file names:
+	+ Update controllers to pass in only the needed folder and file names inside
+		the view directory:
+		
 		func NewUsers() *Users {
 			return &Users{
 				NewView: views.NewView("bootstrap", "users/new"),
