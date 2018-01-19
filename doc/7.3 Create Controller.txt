@@ -77,3 +77,8 @@
 		users controller
 -- Common controller actions : CRUD (create, read, update, delete) so that users
 	can perform these actions on a resource (image/post/etc)
+	+  Show, Edit, Update, New, Create, Delete are common names of method/action
+		in the controller code
+		-- Edit and New actions are used to render the respective forms (GET 
+			requests), while Update and Create are used to process the form 
+			submission (POST or PUT requests).

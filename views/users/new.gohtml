@@ -18,7 +18,9 @@
 
 <!--Made sign up form a template to put into panel code-->
 {{define "signupForm"}}
-<form>
+<!--Update form to tell browser where to submit the form (/signup) and to use
+HTTP POST method-->
+<form action="/signup" method="POST">
 	<div class="form-group">
 		<label for="email">Email address</label>
 		<input type="email" name="email" class="form-control" id="email"

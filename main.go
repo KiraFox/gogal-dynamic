@@ -17,20 +17,19 @@ func main() {
 
 	homeView = views.NewView("bootstrap", "views/home.gohtml")
 	contactView = views.NewView("bootstrap", "views/contact.gohtml")
-	// Create Users Controller variable and set it to NewUser function
 	usersC := controllers.NewUsers()
 
 	var nf http.Handler
 	nf = http.HandlerFunc(notFound)
 
 	r := mux.NewRouter()
-	r.HandleFunc("/", home)
-	r.HandleFunc("/contact", contact)
-	// Update signup webpage to use the User Controller var and run the method
-	// New for "new" users.  The method will handle any web requests for the
-	// signup page now.  The router can use the method because it uses the
-	// arguments of type ResponseWrite and Request.
-	r.HandleFunc("/signup", usersC.New)
+	// Update router to use HTTP request method "GET"
+	r.HandleFunc("/", home).Methods("GET")
+	r.HandleFunc("/contact", contact).Methods("GET")
+	r.HandleFunc("/signup", usersC.New).Methods("GET")
+	// Map POST requests on the /signup page to use the Create method ; because
+	// this means that a form has been submitted to create new user
+	r.HandleFunc("/signup", usersC.Create).Methods("POST")
 	r.NotFoundHandler = nf
 	http.ListenAndServe(":3000", r)
 }

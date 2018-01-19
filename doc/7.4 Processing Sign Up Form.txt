@@ -1,0 +1,109 @@
+7.4 Processing Sign Up Form:
+-- Create temp Create method for the users struct to test router and template
+	changes work before making final method
+	func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "Temporary response")
+	}
+-- Set HTTP request methods with gorilla/mux:
+	+  Needed for pages that can have created/updated/destroyed data
+	+  Update router to inform it which HTTP method to accept for each
+		handler function
+		-- Map POST requests on the /signup page to use the Create method ; because
+		this means that a form has been submitted to create new user
+			r.HandleFunc("/signup", usersC.Create).Methods("POST")
+		-- Map GET requests on the /signup page to show (render) the sign up form
+			r.HandleFunc("/signup", usersC.New).Methods("GET")
+	+  Update new user template file so the form will POST the data to /signup
+		{{define "signupForm"}}
+		<form action="/signup" method="POST">
+-- Parse the POST form using Golang:
+	+  When a form is submitted to your web application it will be included in
+		the web request the use is making ; part of the http.Request parameter
+		that is passed into your handler function
+		-- before you can access the form you need to parse it ; call ParseForm
+			method (in Go library) on the http.Request passed into your handler
+		-- when we call ParseForm inside our Create method it will parse the HTML
+			form that was submitted then store the data in the PostForm field
+			of the http.Request
+		-- we are going to parse our form, check for errors, then print out the
+			two fields we expect to be in our HTML form
+
+		func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
+			if err := r.ParseForm(); err != nil {
+			panic(err)
+			}
+			fmt.Fprintln(w, r.PostForm["email"])
+			fmt.Fprintln(w, r.PostForm["password"])
+		}
+
+		-- PostForm is a map[string] []string behind the scenes so we can access 
+			the fields stored in PostForm using the ["key"] syntax
+-- Parse the POST form using gorilla/schema:
+	+  Using this instead of manually parsing data
+	+  Schema package designed to make it easier to convert values into Go struct
+		including doing common type conversions before assigning to a struct field
+	+  Create a struct to store the form information into in the users.go file
+
+		type SignupForm struct {
+			Email    string
+			Password string
+		}
+	+  Add struct tags 
+		-- Struct tags are a form of metadata that can be added to the fields of
+			any struct.
+		-- Format is `key:"value"` and come after the field's type
+		-- Other packages can look up the struct tag and use it to determine how
+			to proceed
+		-- Most packages use their name as the "key"
+		-- Using struct tags to tell schema package how to map the data in the 
+			form fields into the SignupForm struct
+
+		type SignupForm struct {
+			Email    string `schema:"email"`
+			Password string `schema:"password"`
+		}
+	+  Parse form, initialize a decoder and SignupForm, then Decode using
+		SignupForm as destination and r.PostForm as source:
+
+		func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
+			if err := r.ParseForm(); err != nil {
+				panic(err)
+			}
+			dec := schema.NewDecoder()
+			form := SignupForm{}
+			if err := dec.Decode(&form, r.PostForm); err != nil {
+				panic(err)
+			}
+			fmt.Fprintln(w, form)
+		}
+-- Keep parsing code DRY:
+	+  Don't repeat yourself
+	+  Create new file in controllers folder called helpers.go to house the
+		reusable generic functions
+	+  Add a parseForm function :
+		func parseForm(r *http.Request, dst interface{}) error {
+			if err := r.ParseForm(); err != nil {
+				return err
+			}
+			dec := schema.NewDecoder()
+			if err := dec.Decode(dst, r.PostForm); err != nil {
+				return err
+			}
+			return nil
+		}
+		-- First parameter *http.Request because we want helper function to 
+			handle calling ParseForm method and check for errors and provide 
+			access to the HTML form data
+		-- Second parameter is destination where we want to store the information
+			we parse from the HTML form.  Use empty interface(interface{}) to say
+			it can be any type, such as a pointer to SignupForm struct
+		-- Return errors when there are any
+	+  Update Create method in Users controller to use new function:
+		func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
+			var form SignupForm
+			if err := parseForm(r, &form); err != nil {
+				panic(err)
+			}
+			fmt.Fprintln(w, "Email is", form.Email)
+			fmt.Fprintln(w, "Password is", form.Password)
+		}

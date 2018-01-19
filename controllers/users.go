@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/KiraFox/gogal-dynamic/views"
@@ -12,12 +13,10 @@ type Users struct {
 	NewView *views.View
 }
 
-// This function handles the logic for rendering "new" users view template and
+// This function handles the logic for parsing "new" users view template and
 // returning the information to the Users controller struct
 func NewUsers() *Users {
 	return &Users{
-		// Call the NewView function in our created views package to parse
-		// which templates we want to use for the "new" users page
 		NewView: views.NewView("bootstrap", "views/users/new.gohtml"),
 	}
 }
@@ -26,10 +25,14 @@ func NewUsers() *Users {
 // Users controller struct for the Sign Up ("new" users) webpage
 // GET /signup
 func (u *Users) New(w http.ResponseWriter, r *http.Request) {
-	// Using "u" to access the Users controller struct
-	// Since NewView holds a views.View we can call the Render method from the
-	// associed with the View type struct
 	if err := u.NewView.Render(w, nil); err != nil {
 		panic(err)
 	}
+}
+
+// This method is used to process the signup form when a user tries to create
+// a new user account.
+// POST /signup
+func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "Temporary response")
 }
