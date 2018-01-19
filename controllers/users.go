@@ -5,9 +5,7 @@ import (
 	"net/http"
 
 	"github.com/KiraFox/gogal-dynamic/views"
-
 	//Using this package to help parse the signup form
-	"github.com/gorilla/schema"
 )
 
 // This is the controller for the "users" resource
@@ -37,25 +35,19 @@ func (u *Users) New(w http.ResponseWriter, r *http.Request) {
 // a new user account.
 // POST /signup
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
-	// Need to parse the form that is POSTed as part of our http.Request when the
-	// Signup form is submitted; otherwise the form is ignored when submitted
-	// and we have no values to work with.
-	if err := r.ParseForm(); err != nil {
-		panic(err)
-	}
-	// Intialize a decoder from the schema package to use on the parsed form.
-	dec := schema.NewDecoder()
-	// Intialize a SignupForm so we have a destination for the parsed and decoded
-	// form information.
-	form := SignupForm{}
-	// Run the decoder using the Decode method and give it the destination (&form)
-	// where you want the decoded parsed form information stored and the source
-	// (r.PostForm) you want to decode to begin with.
-	if err := dec.Decode(&form, r.PostForm); err != nil {
-		panic(err)
-	}
+	// Intialize the destination variable
+	var form SignupForm
 
-	fmt.Fprintln(w, form)
+	// Call parseForm helper function and pass it the http.Request to parse &
+	// decode and the destination for the final information, and check for any
+	// returned errors
+	if err := parseForm(r, &form); err != nil {
+		panic(err)
+	}
+	// Print to check we can access the fields in SignupForm and that it has the
+	// correct values associated.
+	fmt.Fprintln(w, "Email is", form.Email)
+	fmt.Fprintln(w, "Password is", form.Password)
 }
 
 // This is the struct to hold the information submitted using the Signup form

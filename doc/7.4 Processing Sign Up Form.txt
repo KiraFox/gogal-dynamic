@@ -86,7 +86,9 @@
 	+  Don't repeat yourself
 	+  Create new file in controllers folder called helpers.go to house the
 		reusable generic functions
-	+  Add a parseForm function :
+	+  Add a parseForm function : this will be used anytime we need to parse a
+		form submitted and decode it using the gorilla/schema package and either
+		return the data we want or any errors that happen
 		func parseForm(r *http.Request, dst interface{}) error {
 			if err := r.ParseForm(); err != nil {
 				return err
