@@ -57,7 +57,6 @@ type View struct {
 	Layout   string
 }
 
-// Create render method for View type
 // This renders the view of the webpage and handles the logic so it can be used
 // by the handler functions instead of the logic being coded in the handlers.
 // The data parameter will be used in the future.
@@ -68,7 +67,7 @@ func (v *View) Render(w http.ResponseWriter, data interface{}) error {
 
 // Create new method for View type that receives an http response writer and a
 // request so Views rendered can be used by router without a separate handler
-// function if needed.
+// function if needed. ServeHTTP(ResponseWriter,*Request) = http.Handler object
 func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := v.Render(w, nil); err != nil {
 		panic(err)

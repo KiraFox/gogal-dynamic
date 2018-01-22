@@ -50,7 +50,8 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Password is", form.Password)
 }
 
-// This is the struct to hold the information submitted using the Signup form
+// This is the struct to hold the information submitted using the Signup form on
+// the /signup webpage
 type SignupForm struct {
 	// Use struct tags so gorilla/schema package knows about the input fields
 	// in the Signup form.

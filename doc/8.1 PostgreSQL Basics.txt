@@ -1,0 +1,126 @@
+PostgreSQL Basics :
+--Login via command line: using postgres username
+	psql -U postgres
+	(enter password when prompted)
+--Create New Database:
+	login to postgresql
+	run command: CREATE DATABASE database_name;
+--Connect to Database:
+	login to postgresql
+	run command: \c database_name
+--Create Table inside Database:
+	login
+	connect to database
+	run command: 
+		CREATE TABLE table_name (  
+  			field_name TYPE CONSTRAINTS,
+  			field_name TYPE(args) CONSTRAINTS
+		);
+
+	+ Some TYPEs require additional arguments
+-- Delete Database: (cannot be undone)
+	login to postgresql
+	run command: \l  (to see list of databases and names)
+	run command: DROP DATABASE name; 
+--Basic Postgresql TYPEs:
+	+  INT - store integers between -2147483648 and 2147483647
+	+  SERIAL - store integers between 1 and 2147483647; will automatically set 
+		a value if you don't provide one, and the new value will always increase
+		by 1
+	+  VARCHAR(#) - like a string but have to specify max length
+	+  TEXT - like a string but no max; specific to postgresql
+--Basic Postgresql CONSTRAINTs:
+	+  UNIQUE - ensures every record in your database for that field has a unique
+		value; case sensitive (john & JOHN are different)
+	+  NOT NULL - ensures every record in your database for that field has a value
+	+  PRIMARY KEY - combines UNIQUE and NOT NULL; only be used ONCE each table;
+		creates index for the field which makes it faster to lookup records by 
+		this field.
+--Example Table:
+	CREATE TABLE users (  
+  	id SERIAL PRIMARY KEY,
+  	age INT,
+  	first_name TEXT,
+  	last_name TEXT,
+  	email TEXT UNIQUE NOT NULL
+	);
+--DDL Data Definition Language: set of commands used to define overall structure
+	or schema of how data is going to be stored.  Ex: Create table, add fields,
+	change fields (names, types, contraints)
+--DML Data Manipulation Language: set of commands to manipulate the data stored.
+	Main categories are creating data, retrieving data, updating data, and
+	deleting data.
+--DCL Data Control Language: set of commands used to dictate which users have 
+	permissions to do different things inside your database. Ex: user has 
+	permission to read database but not create new records
+--SQL INSERT statement:
+	+  used to insert (add) new records to a table
+	+  1st Way: provide columns you want to set the values for and then give the
+		values for each of those columns
+
+		INSERT INTO users (age, email, first_name, last_name)  
+		VALUES (30, 'jon@calhoun.io', 'Jonathan', 'Calhoun');
+
+	+  2nd Way: provide values for every column in the table in the same order
+		as the columns in the table
+
+		INSERT INTO users  
+		VALUES (2, 22, 'John', 'Smith', 'john@smith.com');
+
+		-- By inserting without specifying which we want to provide values, we
+			have to provide a value for "id" which defeats the purpose of using
+			PRIMARY KEY to determine the value
+		-- newlines don't matter, it can be written on one line
+--Query a Database:
+	+  SELECT : all SQL queries start with SELECT; tells database what data to
+		retrieve and where to retrieve it from
+	+  Query specific column from a specific table and return values:
+		SELECT column FROM table;
+
+		Example - SELECT email FROM users; 
+
+	+  Query all columns from a specific table and return values:
+		SELECT * FROM table; 
+
+		Example - SELECT * FROM users;
+
+	+  Filter query using WHERE:
+		
+		Example:
+		SELECT *  
+		FROM users  
+		WHERE email = 'jon@calhoun.io'; 
+
+		-- WHERE clause can be used with any conditional clause
+		-- Common clauses: > , < , and =   ; when > & < are used with something
+			that uses the alphabet it means "comes after" & "comes before"
+			alphabetically speaking
+		-- Combine conditionals with AND + OR : when using AND all conditions
+			must be met ; OR requires at least one condition be met
+
+		SELECT *  
+		FROM users  
+		WHERE last_name > 'Douglas'  
+		AND age > 16;  
+--Update SQL records in a database:
+	+  Update all records in a table:
+		Example: update users table and set the column first_name to have the 
+		value abby in every row
+
+		UPDATE users
+		SET first_name = 'abby';
+
+	+  Update specific record in a table:
+		Example: update users table and set the first name to abby and last name
+		to cat but only where the id column value is equal to 1
+
+		UPDATE users  
+		SET first_name = 'abby', last_name = 'cat'  
+		WHERE id = 1;  
+
+		-- WHERE query can match multiple users so make sure it is grabbing only
+			the records you want to update.  Use something unique such as the
+			"id" column in the example
+--Delete SQL records in a database:
+	DELETE FROM <table>
+	WHERE <clauses>
