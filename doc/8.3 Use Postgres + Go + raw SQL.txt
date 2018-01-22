@@ -1,0 +1,151 @@
+Use Postgres w/ Go and raw SQL:
+-- Install a Postgres specific driver to go along with the Go database/sql 
+	package; going to use github.com/lib/pq
+-- Connect Postgres w/ database/sql package: (experiment, use the exp folder)
+	+  Delete all previous files in exp folder and create new main.go file
+	+  Import _ "github.com/lib/pq" : use the underscore in front of the import 
+		because it tells the Go compiler that we need it imported even though
+		we won't be using it directly; just need it to register the "postgres"
+		driver for the database/sql package
+	+  Create constants : 
+		const (
+			host = "localhost"
+			port = 5432
+			user = "username"
+			password = "password"
+			dbname = "appname_dev"
+		)
+		-- Normally these values are not in the code; it will be shown later
+			how to move the values outside the code using flags
+	+  Create connection string : used to connect to database
+		func main() {
+			psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s "+
+			"sslmode=disable", host, port, user, password, dbname)
+
+		-- this creates a string with all the constant values added in which will
+			be used with the sql.Open function to connect to the database
+	+  Opening a database connetion : 
+		db, err := sql.Open("postgres", psqlInfo)
+			if err != nil {
+				panic(err)
+			}
+
+		-- This return a *sql.DB if successful, otherwise it returns an error
+	+  Pinging the database : 
+		err = db.Ping()
+			if err != nil {
+				panic(err)
+			}
+
+		-- Use the Ping method on the sql.DB type we created to ensure our code
+			actually tries to talk to the database and handle error if there is 
+			one
+	+  Print out success and close database :
+		fmt.Println("Successfully connected!")
+		db.Close()
+-- Create SQL tables: (experiment)
+	CREATE TABLE users (
+		id SERIAL PRIMARY KEY,
+		name TEXT,
+		email TEXT NOT NULL);
+	CREATE TABLE orders (
+		id SERIAL PRIMARY KEY,
+		user_id INT NOT NULL,
+		amount INT,
+		description TEXT);
+	+  These tables have a relationship where users can make orders and their
+		orders are identiefied by their id in the orders table
+	+  Create user record via Go : (placing code between Ping and Close)
+		_, err = db.Exec(`
+			INSERT INTO users(name, email)
+			VALUES($1, $2)`, 
+			"Jon Calhoun", "jon@calhoun.io")
+		if err != nil {
+			panic(err)
+		}
+
+		-- The first part of the Exec code is the actual query we are passing to
+			the database
+		-- Set the VALUES part of the actual query as $1 and $2 to be placeholders
+			so the database/sql package can handle creating the SQL statement
+		-- Placeholders are used here to prevent things like SQL injection (security
+			vulnerability)
+		-- Second part are the values that will replace the placeholders
+		-- While the placeholders are being replaced, the databas/sql package runs
+			more checks to make sure the data passed into the table is actual data
+	+  Insert and Retrieve ID of new record :
+		var id int
+		row := db.QueryRow(`
+			INSERT INTO users(name, email)
+			VALUES($1, $2) RETURNING id`, 
+			"Kira", "test@test.com")
+		err = row.Scan(&id)
+		if err != nil {
+			panic(err)
+		}
+
+		-- use QueryRow instead of Exec so we get a row back with the ID in the
+			row's results
+		-- the SQL is RETURNING id which just tells the database to return the ID
+			of the newly created record and the QueryRow returns a sql.Row object
+		-- call Row.Scan on the sql.Row object we got back and saved into variable
+			and tell it where to store the data retrieved from the database (&id)
+	+  Querying user by ID :
+		var id int
+		var name, email string
+		row := db.QueryRow(`
+			SELECT id, name, email
+			FROM users
+			WHERE id=$1`, 1)
+		err = row.Scan(&id, &name, &email)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("ID: ", id, "Name: ", name, "Email: ", email)
+
+		-- Since SELECTing 3 fields, we will have 3 pieces of data to assign 
+			when using row.Scan
+		-- Use placeholders ($1) still when making the query
+	+  Querying multiple records :
+		var id int
+		var name, email string
+		rows, err := db.Query(`
+			SELECT id, name, email
+			FROM users
+			WHERE email = $1
+			OR id > $2`,
+			"jon@calhoun.io", 1)
+		if err != nil {
+			panic(err)
+		}
+
+		for rows.Next() {
+			rows.Scan(&id, &name, &email)
+			fmt.Println("ID: ", id, "Name: ", name, "Email: ", email)
+		}
+
+		-- using db.Query method which returns a *sql.Rows and an error which
+			if there are no errors contains one or more rows of data that match
+			the query given
+		-- sql.Rows object starts off pointing to a location before the first
+			row in the database so we must use rows.Next to get to the first
+			row so we can use rows.Scan
+		-- rows.Next is a bool statement so it can be used in a for loop to keep
+			going through the rows that were returned until there are none left
+		-- use the for loop to print out the data of each row or you could use it
+			to assign the data to a slice, map or somewhere else
+	+  Querying related records using SQL :
+		SELECT users.id, users.email, users.name,
+			orders.id AS order_id,
+			orders.amount AS order_amount,
+			orders.description AS order_description
+		FROM users 
+		INNER JOIN orders
+		ON users.id = orders.user_id;
+
+
+		id |     email |    name       | order_id | order_amount | order_description
+----+----------------+-------------+----------+--------------+-------------------
+		1 | jon@calhoun.io | Jon Calhoun | 1 | 1000 | USB-C Adapter x1
+
+-- Delete SQL tables after running experiments
