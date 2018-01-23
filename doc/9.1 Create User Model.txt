@@ -1,0 +1,32 @@
+Create User Model:
+-- Define our User resource:
+	+ Decide what data we want to store with each user object. Your requirements
+		will change over time, so try starting with a basic set of attributes
+		and update the resource as needed.
+	+ Basic set of attributes to store:
+		- id : unique identifier, represented as a positive integer
+		- name : user's full fame
+		- email : user's email address
+		- created_at : date user account was created
+		- updated_at: date user account was last updated
+		- deleted_at : date user account was deleted (using this to "delete"
+			accounts without actually removing them. This is useful for when
+			a user might be hacked and have the account deleted and we can then
+			bring it back. You can permanently delete a user after a set time.
+			GORM is designed to ignore models with a deleted_at attribute by
+			default.)
+	+ Create folder for models like we did for controllers and create file for
+		the User model
+	+ In the User model file, create the type struct to have the attributes we
+		want to store for the users
+			package models
+
+			import (
+				"github.com/jinzhu/gorm"
+			)
+
+			type User struct {
+				gorm.Model 
+				Name       string
+				Email      string `gorm:"not null;unique_index"` 
+			}
