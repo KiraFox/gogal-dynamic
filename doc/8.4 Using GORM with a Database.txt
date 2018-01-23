@@ -1,0 +1,223 @@
+Using GORM with a Database:
+-- GORM is an ORM (object-relational mapping) which is used to simplify the 
+	process of mapping data in one system to data in another system. 
+	+  Allows us to express what our data will look like in Go then it handles
+		translating that into a format that Postgres database understands ;
+		don't have to manually write a translation layer
+	+ Provides helper functions that simplify the code when working with a SQL
+		database; such as not needing to write full SQL queries
+-- Connect to database :
+	+ Import "github.com/jinzhu/gorm/dialects/postgres" &	
+	_ "github.com/lib/pq" ; no database/sql import needed
+	
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s "+
+		"sslmode=disable", host, port, user, password, dbname)
+
+	db, err := gorm.Open("postgres", psqlInfo)
+	if err != nil {
+		panic(err)
+	}
+-- Define GORM model/SQL table :
+	+ Define a struct then have GORM translate that into a SQL table then create
+		the table for us
+	+ gorm.Model is a struct that has an ID field (and makes it a primary key),
+		created at/updated at/deleted at fields ; use this in your own struct
+		and add extra fields if wanted to go into the table
+
+		type Model struct {
+    		ID        uint `gorm:"primary_key"`
+   			CreatedAt time.Time
+    		UpdatedAt time.Time
+    		DeletedAt *time.Time `sql:"index"`
+		}
+
+	+ gorm.Model "deleted at" field used to mark a record as deleted instead of
+		actually deleting the record from the database.  As a result queries
+		will ignore any record that has a value set in this field
+	+ Use tags to set constraints on fields such as NOT NULL
+	+ unique_index tag makes the field a sorted index so it is more efficient
+		to search that field for a value
+	
+	Example Gorm Model:
+
+	type User struct {
+		gorm.Model
+		Name  string
+		Email string `gorm:"not null;unique_index"`
+	}
+		+ This gives us the 4 fields in gorm.Model plus 2 more fields (Name &
+			Email) inside our SQL table "users"
+-- Creating/Migrating tables :
+	db.AutoMigrate(&User{})
+
+	+ This creates the table in the SQL database per the fields and tags set in
+		the User struct
+	+ Table name inside the database will be 'users' as the AutoMigrate function
+		lowercases the name of the struct then pluralizes it
+	+ AutoMigrate can add fields/columns if you update the struct and call the 
+		AutoMigrate function on that struct again
+	+ AutoMigrate can only create tables or add new fields to already existing 
+		tables
+	+ AutoMigrate CANNOT delete a table and make a new one of the same name;
+		cannot delete columns originally created in a table; cannot change the
+		type of an already existing column
+-- Logging :
+	db.LogMode(true)
+
+	+ Enable logging so you can track what SQL statements are being run behind
+		scenes
+	+ LogMode takes in a single argument boolean; it should be true when you 
+		want to enable logging and false when you want to disable it
+	+ Put it after you open the database
+	+ With logging enabled you will see output ONLY when SQL statements are run.
+		Example: [2017-07-18 17:04:12] [6.85ms] CREATE TABLE "users" ...
+
+-- Creating a record :
+	+ General creation - Create instance of the struct of the SQL table you want 
+		to add a record into. Fill in the fields (besides gorm.Model) you want
+		add with data provided. Call the Create() method on the instance and
+		check for errors (db.Create(instance).Error).
+	+ Create a User struct instance and fill in the Name and Email fields; do not
+		need to set anything in gorm.Model as those are filled automatically
+		by GORM
+
+		name, email := getInfo() // name and email given by user
+		u := &User {
+			Name: name,
+			Email: email,
+		}
+
+	+ Call db.Create on the instance (u) created and it will create a record in
+		the database with the information in the instance; use the .Error 
+		attribute to verify there were no errors during creation before proceeding
+
+		if err = db.Create(u).Error; err != nil {
+			panic(err)
+		}
+		fmt.Printf("%+v\n", u)
+
+-- Querying single record :
+	+ Retrieve first record:
+		var u User
+		db.First(&u)
+		if db.Error != nil {
+			panic(db.Error)
+		}
+		
+		-- Can be used in conjunction with other queries
+		-- Telling GORM that we would like the first user in our database to be
+			retrieved and stored in the u object
+		-- By passing in an address to a User object(&u) GORM knows to query the
+			users table and to put the resulting record into the object
+		-- If there was an error it would be present on the db object so we have
+			to see if db.Error has a value or not before using the User object
+	+ Retrieve first record with id = # :
+		var u User
+		id := 2
+		db.First(&u, id)
+		if db.Error != nil {
+			panic(db.Error)
+		}
+
+		-- db.First() can take a second argument being the id # of the record we
+			are trying to retrieve
+	+ Query using Where() method w/ First() :
+		var u User
+		maxID := 3
+		db.Where("id <= ?", maxID).First(&u)
+		if db.Error != nil {
+			panic(db.Error)
+		}
+
+		-- Provide a query to where, then the value you want to replace in the 
+			query, then First is used to give the first result that matches the
+			query parameters
+		-- Use the "?" character instead of $1 as placeholder
+		-- This example is looking for any user whose ID is less than or equal
+			to the provided id (maxID), and want the First record the query finds
+			to be returned to the User struct.
+	+ Query with existing user info :
+		var u User
+		u.Email = "jon@calhoun.io"
+		db.Where(u).First(&u)
+		if db.Error != nil {
+			panic(db.Error)
+		}
+
+		-- Set a field in the User struct instance and pass that as the argument
+			to the Where() method then have it returned by the First() method
+			into the user object (&u)
+-- Querying Multiple Records :
+	+ Use the Find() method instead of First() and pass in a slice of User structs
+		instead of a single instance.
+
+	var users []User
+
+	db.Find(&users)
+	if db.Error != nil {
+		panic(db.Error)
+	}
+
+	-- This returns all the users records in the database in a slice of User structs 
+-- Create Related Models/Tables :
+	+ Create struct that will have a UserID field (or a field relating to the
+		other struct you want to have a related table with)
+
+		type Order struct {
+			gorm.Model
+			UserID uint
+			Amount int
+			Desc   string
+		}
+	+ Create function that supplies the Order struct with user id from User struct
+		
+		func createOrder(db *gorm.DB, user User, amount int, desc string) {
+			db.Create(&Order{
+				UserID: user.ID,
+				Amount: amount,
+				Desc: desc,
+				})
+			if db.Error != nil {
+				panic(db.Error)
+			}
+		}
+	+ Include the Order struct in the AutoMigrate:
+		db.AutoMigrate(&User{}, &Order{})
+	+ Generate related data : create instance of User and provide it information
+		then use that information when running your related function
+
+		var user User
+		db.First(&user)
+		if db.Error != nil {
+			panic(db.Error)
+		}
+		createOrder(db, user, 1000, "Poodle toy")
+		createOrder(db, user, 2500, "Computer case")
+-- Query related data :
+	+ For this example we would like to be able to look up a user and load the 
+		orders linked to that user at the same time.
+	+ Update User struct :
+		type User struct {
+			gorm.Model
+			Name  string
+			Email string `gorm:"not null;unique_index"`
+			Orders []Order
+		}
+
+		-- informs GORM that our user struct is related to the order struct
+	+ Preload related info :
+		var user User
+		db.Preload("Orders").First(&user)
+		if db.Error != nil {
+			panic(db.Error)
+		}
+
+		fmt.Println("Email:", user.Email)
+		fmt.Println("Number of orders:",len(user.Orders))
+		fmt.Println("Orders:", user.Orders)
+
+		-- Use Preload() method on the gorm.DB with the capitalized name of the
+			table you want to preload (remember tables are the pluralized
+			name of the struct associated to them)
+		-- You can also use the Find() method and it will preload the orders for
+			every user that ends up being returned in the query.
