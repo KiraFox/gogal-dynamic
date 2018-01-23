@@ -30,3 +30,86 @@ Create User Model:
 				Name       string
 				Email      string `gorm:"not null;unique_index"` 
 			}
+-- Create Interface for Database:
+	+ Make an abstraction layer (UserService) for connecting the model to the 
+		database.
+		- Don't want to interact with GORM directly in most of the app because
+			we may want to stop using GORM or even change our database to another
+			kind.
+		- Gives us one area to update database implementation details without
+			needing to update any controller or view code as well
+		- This type will provide methods for querying, creating, and updating
+			users.
+		- This type needs access to a gorm.DB pointer so we can interact with a
+			GORM object as needed versus acting directly on the object all
+			throughtout the code.
+
+		type UserService struct {
+			db *gorm.DB 
+		}
+
+	+ Open connection to database with GORM :
+		- This function opens a connection to a database (connectionInfo) and 
+			returns a gorm.DB object to our UserService to use. It also logs the
+			SQL run. Do not close the database in this function as it would 
+			close before it returns the object to the UserService.
+
+		func NewUserService(connectionInfo string) (*UserService, error) {
+			// End user passes a string defining how to connect to the database and we
+			// want to use the postgres dialect.
+			db, err := gorm.Open("postgres", connectionInfo)
+			if err != nil {
+				return nil, err
+			}
+
+			db.LogMode(true)
+			return &UserService{
+				db: db,
+			}, nil
+		}
+	+ Close connection to database :
+		- This method closes the UserService database connection
+
+		func (us *UserService) Close() error {
+			return us.db.Close()
+		}
+	+ Add method to query database :
+		- This method allows us to retrieve a user from the database based on
+			the ID of user
+		- Create custom error message in the case of UserService not finding
+			any matching record in the database so we can differentiate it from
+			some other issue happening behind the scenes (such as not connecting
+			to the database)
+		- ByID will look up a user with the provided ID. If the user is found, we
+			return nil error and information to User model. If user is not found
+			we return the custom error variable. If there is a different error,
+			we return whatever error was generated.
+
+		var (
+			ErrNotFound = errors.New("models: resource not found in database")
+		)
+
+		func (us *UserService) ByID(id uint) (*User, error) {
+			var user User
+			err := us.db.Where("id = ?", id).First(&user).Error
+			switch err {
+			case nil:
+				return &user, nil
+			case gorm.ErrRecordNotFound:
+				return nil, ErrNotFound
+			default:
+				return nil, err
+			}
+		}
+
+	+ Add method to destroy/recreate tables in the database:
+		- This method allows us to destroy existing tables and recreate them. It
+			is useful in a development environment when we want to quickly reset
+			our database.
+		- Calls the DropTableIfExists method on the users table
+		- Rebuild the users table using AutoMigrate function
+
+		func (us *UserService) DestructiveReset() {
+			us.db.DropTableIfExists(&User{})
+			us.db.AutoMigrate(&User{})
+		}
