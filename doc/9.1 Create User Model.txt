@@ -181,3 +181,19 @@ Create User Model:
 		used to dictate logic, and aren’t incredibly expensive. As a result, it
 		isn’t uncommon or frowned upon to use them to determine the flow of your
 		program.
+-- AutoMigrate & Update Errors :
+	+ This method will attempt to automatically migrate the users table.
+		func (us *UserService) AutoMigrate() error {
+			if err := us.db.AutoMigrate((&User{})).Error; err != nil {
+				return err
+			}
+			return nil
+		}
+	+ Update DestructiveReset to returns errors and use new method
+		func (us *UserService) DestructiveReset() error {
+			err := us.db.DropTableIfExists(&User{}).Error
+			if err != nil {
+				return err
+			}
+			return us.AutoMigrate()
+		}

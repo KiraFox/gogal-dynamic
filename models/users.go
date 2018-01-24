@@ -52,12 +52,22 @@ type UserService struct {
 func (us *UserService) Close() error {
 	return us.db.Close()
 }
+// This method will attempt to automatically migrate the users table.
+func (us *UserService) AutoMigrate() error {
+	if err := us.db.AutoMigrate((&User{})).Error; err != nil {
+		return err
+	}
+	return nil
+}
 
 // This method drops (deletes) the user table then rebuilds it. This is for use
 // during development.
-func (us *UserService) DestructiveReset() {
-	us.db.DropTableIfExists(&User{})
-	us.db.AutoMigrate(&User{})
+func (us *UserService) DestructiveReset() error {
+	err := us.db.DropTableIfExists(&User{}).Error
+	if err != nil {
+		return err
+	}
+	return us.AutoMigrate()
 }
 
 // This method will create the provided user and backfill data.
