@@ -125,3 +125,40 @@ Create User Model:
 		or nil if it runs successfully.
 	+ It doesn't need to return a user object because it accepts a pointer to one
 		and instead just updated the provided user.
+-- DRY your Code :
+	+ Don't add more methods than a service immediately needs, unless you know
+		will definitely be needed in the future (such as using a unique field
+		like email to query users by for finding their log in)
+	+ Look for ways to DRY your code/methods, such as if you are going to have
+		multiple queries that will return the same things based on situations.
+		-- Example: We are searching for user by ID, email, or any individual
+			field and will only want to retrieve the first returned, return
+			custom error if user isn't found, or return any other errors.
+	+ Create function to run common First() type query:
+		func first(db *gorm.DB, dst interface{}) error {
+			err := db.First(dst).Error
+			if err == gorm.ErrRecordNotFound {
+				return ErrNotFound
+			}
+			return err
+		}
+	+ Update methods to use new helper query function:
+		func (us *UserService) ByID(id uint) (*User, error) {
+			var user User
+			db := us.db.Where("id = ?", id)
+			err := first(db, &user)
+			if err != nil {
+				return nil, err
+			}
+			return &user, nil
+		}
+	+ Create Email query method with new helper function:
+		func (us *UserService) ByEmail(email string) (*User, error) {
+			var user User
+			db := us.db.Where("email = ?", email)
+			err := first(db, &user)
+			if err != nil {
+				return nil, err
+			}
+			return &user, nil
+		}
