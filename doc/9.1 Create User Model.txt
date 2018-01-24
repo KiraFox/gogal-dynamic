@@ -113,3 +113,15 @@ Create User Model:
 			us.db.DropTableIfExists(&User{})
 			us.db.AutoMigrate(&User{})
 		}
+
+-- Create Users :
+	func (us *UserService) Create(user *User) error {
+		return us.db.Create(user).Error
+	}
+
+	+ This method will create the provided user and backfill data.
+	+ Input a pointer to the User model object, run the gorm.DB Create method
+		on it to save the User data to the database, and then return an error
+		or nil if it runs successfully.
+	+ It doesn't need to return a user object because it accepts a pointer to one
+		and instead just updated the provided user.

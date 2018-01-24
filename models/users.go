@@ -73,3 +73,11 @@ func (us *UserService) DestructiveReset() {
 	us.db.DropTableIfExists(&User{})
 	us.db.AutoMigrate(&User{})
 }
+
+// This method will create the provided user and backfill data.
+// Input a pointer to the User model object, run the gorm.DB Create method on it
+// to save the User data to the database, and then return an error or nil if it
+// runs successfully.
+func (us *UserService) Create(user *User) error {
+	return us.db.Create(user).Error
+}
