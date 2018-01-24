@@ -162,3 +162,22 @@ Create User Model:
 			}
 			return &user, nil
 		}
+-- Update/Delete users :
+	+ Create method to update users: This method will update the provided user with all the data in the provided User model object.
+		func (us *UserService) Update(user *User) error {
+			return us.db.Save(user).Error
+		}
+	+ Delete users via GORM:
+		-- GORM's Delete method works two ways- provide user object that has an
+			ID and GORM will delete user with that primary id key ; or if we
+			DO NOT provide an ID, then ALL users are deleted
+		-- Create code for when NO ID happens to prevent deleting all users
+
+		var (
+			ErrInvalidID = errors.New("models: ID provided was invalid")
+		)
+	+ Error handling : Errors are very different in Go. They are not your 
+		traditional exceptions, but instead are values that can be returned, 
+		used to dictate logic, and aren’t incredibly expensive. As a result, it
+		isn’t uncommon or frowned upon to use them to determine the flow of your
+		program.

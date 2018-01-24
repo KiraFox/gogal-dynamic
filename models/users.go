@@ -10,6 +10,9 @@ import (
 var (
 	// ErrNotFound is returned when a resource cannot be found in the database.
 	ErrNotFound = errors.New("models: resource not found in database")
+	// ErrInvalidId is returned when an invalid ID is provided to a method like
+	// Delete.
+	ErrInvalidID = errors.New("models: ID provided was invalid")
 )
 
 // This is the struct for the User model and contains what attributes(fields) we
@@ -18,6 +21,24 @@ type User struct {
 	gorm.Model
 	Name  string
 	Email string `gorm:"not null;unique_index"`
+}
+
+// This function opens a connection to a database (connectionInfo) and returns
+// a gorm.DB object to our UserService to use. It also logs the SQL run. Do not
+// close the database in this function as it would close before it returns the
+// object to the UserService.
+func NewUserService(connectionInfo string) (*UserService, error) {
+	// End user passes a string defining how to connect to the database and we
+	// want to use the postgres dialect.
+	db, err := gorm.Open("postgres", connectionInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	db.LogMode(true)
+	return &UserService{
+		db: db,
+	}, nil
 }
 
 // Abstraction layer for the users database. Provide methods for querying,
@@ -47,6 +68,22 @@ func (us *UserService) Create(user *User) error {
 	return us.db.Create(user).Error
 }
 
+// This method will update the provided user with all the data in the provided
+// User model object.
+func (us *UserService) Update(user *User) error {
+	return us.db.Save(user).Error
+}
+
+// This method will delete the user with provided ID.
+// Check if ID is == 0 to give error instead of deleting all users.
+func (us *UserService) Delete(id uint) error {
+	if id == 0 {
+		return ErrInvalidID
+	}
+	user := User(Model: gorm.Model{ID: id})
+	return us.db.Delete(&user).Error
+}
+
 // This method queries database by the user ID given.
 // Create intial query using GORM and save it to a variable to be used in the
 // function "first" to look through the provided database and run the First
@@ -74,24 +111,6 @@ func (us *UserService) ByEmail(email string) (*User, error) {
 		return nil, err
 	}
 	return &user, nil
-}
-
-// This function opens a connection to a database (connectionInfo) and returns
-// a gorm.DB object to our UserService to use. It also logs the SQL run. Do not
-// close the database in this function as it would close before it returns the
-// object to the UserService.
-func NewUserService(connectionInfo string) (*UserService, error) {
-	// End user passes a string defining how to connect to the database and we
-	// want to use the postgres dialect.
-	db, err := gorm.Open("postgres", connectionInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	db.LogMode(true)
-	return &UserService{
-		db: db,
-	}, nil
 }
 
 // This function is used to query the database given and return the First record
