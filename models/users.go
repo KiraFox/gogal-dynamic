@@ -52,6 +52,7 @@ type UserService struct {
 func (us *UserService) Close() error {
 	return us.db.Close()
 }
+
 // This method will attempt to automatically migrate the users table.
 func (us *UserService) AutoMigrate() error {
 	if err := us.db.AutoMigrate((&User{})).Error; err != nil {
@@ -90,7 +91,7 @@ func (us *UserService) Delete(id uint) error {
 	if id == 0 {
 		return ErrInvalidID
 	}
-	user := User(Model: gorm.Model{ID: id})
+	user := User{Model: gorm.Model{ID: id}}
 	return us.db.Delete(&user).Error
 }
 

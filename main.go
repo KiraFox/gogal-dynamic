@@ -5,20 +5,44 @@ import (
 	"net/http"
 
 	"github.com/KiraFox/gogal-dynamic/controllers"
+	"github.com/KiraFox/gogal-dynamic/models"
 
 	"github.com/gorilla/mux"
 )
 
+// Database information. Only use this during development. Do not commit to git
+// with information.
+const (
+	host     = "localhost"
+	port     = 5432
+	user     = "user"
+	password = "password"
+	dbname   = "database"
+)
+
 func main() {
-	// Create static controller for home/contact/etc pages
+	// Create a database connection string
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+		"password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname)
+
+	// Use connection string to create Model services and start it and defer
+	// close until application is done.
+	us, err := models.NewUserService(psqlInfo)
+	if err != nil {
+		panic(err)
+	}
+	defer us.Close()
+	us.AutoMigrate()
+
 	staticC := controllers.NewStatic()
-	usersC := controllers.NewUsers()
+	usersC := controllers.NewUsers(us)
 
 	var nf http.Handler
 	nf = http.HandlerFunc(notFound)
 
 	r := mux.NewRouter()
-	// Update router to use Handle for static pages"
+
 	r.Handle("/", staticC.Home).Methods("GET")
 	r.Handle("/contact", staticC.Contact).Methods("GET")
 	r.HandleFunc("/signup", usersC.New).Methods("GET")
