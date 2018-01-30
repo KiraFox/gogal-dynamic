@@ -83,8 +83,9 @@ func (us *UserService) DestructiveReset() error {
 // Run the gorm.DB Create method on the modified user model to save the User
 // data to the database, and then return an error or nil if it runs successfully.
 func (us *UserService) Create(user *User) error {
+	pwBytes := []byte(user.Password + userPwPepper)
 	hashedBytes, err := bcrypt.GenerateFromPassword(
-		[]byte(user.Password), bcrypt.DefaultCost)
+		pwBytes, bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
