@@ -5,6 +5,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" //loads postgres driver
+	"goloang.org/x/crypto/bcrypt"                // used for hashing passwords
 )
 
 var (
@@ -13,14 +14,17 @@ var (
 	// ErrInvalidId is returned when an invalid ID is provided to a method like
 	// Delete.
 	ErrInvalidID = errors.New("models: ID provided was invalid")
+	userPwPepper = "secret-random-string"
 )
 
 // This is the struct for the User model and contains what attributes(fields) we
 // want to know(store) for each user of the application in the users table.
 type User struct {
 	gorm.Model
-	Name  string
-	Email string `gorm:"not null;unique_index"`
+	Name         string
+	Email        string `gorm:"not null;unique_index"`
+	Password     string `gorm:"-"`        // Raw user password, not saved
+	PasswordHash string `gorm:"not null"` // Hashed user password, saved
 }
 
 // This function opens a connection to a database (connectionInfo) and returns
@@ -72,10 +76,20 @@ func (us *UserService) DestructiveReset() error {
 }
 
 // This method will create the provided user and backfill data.
-// Input a pointer to the User model object, run the gorm.DB Create method on it
-// to save the User data to the database, and then return an error or nil if it
-// runs successfully.
+// Input a pointer to the User model object, run bcrypt hashing on the Password
+// field from the model and check for errors.  If there are no errors, then save
+// the hashed password created in model's PasswordHash field and change the
+// password field to an empty string to clear the original one input.
+// Run the gorm.DB Create method on the modified user model to save the User
+// data to the database, and then return an error or nil if it runs successfully.
 func (us *UserService) Create(user *User) error {
+	hashedBytes, err := bcrypt.GenerateFromPassword(
+		[]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	user.PasswordHash = string(hashedBytes)
+	user.Password = ""
 	return us.db.Create(user).Error
 }
 

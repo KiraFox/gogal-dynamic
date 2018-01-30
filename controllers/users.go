@@ -52,8 +52,9 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	// Use the information from the Signup Form to fill out information in the
 	// User model
 	user := models.User{
-		Email: form.Email,
-		Name:  form.Name,
+		Email:    form.Email,
+		Name:     form.Name,
+		Password: form.Password,
 	}
 
 	// Use the now filled out User model struct and run its Create method to
