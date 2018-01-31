@@ -8,13 +8,14 @@ import (
 	"github.com/KiraFox/gogal-dynamic/views"
 )
 
-// This function handles the logic for parsing "new" users view template and
-// returning the information to the Users controller struct. It also takes a
-// user service and assigns it to the same struct to be used by its methods.
+// This function handles the logic for parsing user templates and then returns
+// the information to the Users controller struct. It also takes a user service
+// and assigns it to the same struct to be used by its methods.
 func NewUsers(us *models.UserService) *Users {
 	return &Users{
-		NewView: views.NewView("bootstrap", "users/new"),
-		us:      us,
+		NewView:   views.NewView("bootstrap", "users/new"),
+		LoginView: views.NewView("bootstrap", "users/login"),
+		us:        us,
 	}
 }
 
@@ -22,6 +23,8 @@ func NewUsers(us *models.UserService) *Users {
 type Users struct {
 	// Store a "new" user view template
 	NewView *views.View
+	// Store a login user view template
+	LoginView *views.View
 	// Store a UserService instance for handlers to access
 	us *models.UserService
 }
@@ -68,6 +71,30 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "User is", user)
 }
 
+// This method is used to process the Login form when a user tries to login to
+// an existing user account.
+// POST /login
+func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
+	form := LoginForm{}
+	if err := parseForm(r, &form); err != nil {
+		panic(err)
+	}
+	// Call the Authenticate method and provide email and password from the login
+	// form and print out information based on if or what error is encountered
+	// when verifying the submitted information
+	user, err := u.us.Authenticate(form.Email, form.Password)
+	switch err {
+	case models.ErrNotFound:
+		fmt.Fprintln(w, "Invalid email address.")
+	case models.ErrInvalidPassword:
+		fmt.Fprintln(w, "Invalid Password provided.")
+	case nil:
+		fmt.Fprintln(w, user)
+	default:
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
 // This is the struct to hold the information submitted using the Signup form on
 // the /signup webpage
 type SignupForm struct {
@@ -75,5 +102,14 @@ type SignupForm struct {
 	// in the Signup form.
 	Email    string `schema:"email"`
 	Name     string `schema:"name"`
+	Password string `schema:"password"`
+}
+
+// This is the struct to hold the information submitted using the Login form on
+// the /login webpage
+type LoginForm struct {
+	// Use struct tags so gorilla/schema package knows about the input fields
+	// in the Login form.
+	Email    string `schema:"email"`
 	Password string `schema:"password"`
 }

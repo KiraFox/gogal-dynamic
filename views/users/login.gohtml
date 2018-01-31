@@ -1,0 +1,36 @@
+<!--Creates panel we want the log in form to be wrapped in-->
+{{define "yield"}}
+<div class="row">
+  <div class="col-md-4 col-md-offset-4">
+    <!--Change panel-default to panel-primary to change color of panel-->
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <h3 class="panel-title">Welcome back!</h3>
+      </div>
+      <div class="panel-body">
+        {{template "loginForm"}}
+      </div>
+    </div>
+  </div>
+</div>
+
+{{end}}
+
+<!--Made log in form a template to put into panel code-->
+{{define "loginForm"}}
+<!--Update form to tell browser where to submit the form (/signup) and to use
+HTTP POST method-->
+<form action="/login" method="POST">
+	<div class="form-group">
+		<label for="email">Email address</label>
+		<input type="email" name="email" class="form-control" id="email"
+			placeholder="Email">
+	</div>
+	<div class="form-group">
+		<label for="password">Password</label>
+		<input type="password" name="password" class="form-control" id="password"
+			placeholder="Password">
+	</div>
+	<button type="submit" class="btn btn-primary">Log In</button>
+</form>
+{{end}}

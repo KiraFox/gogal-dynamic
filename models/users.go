@@ -5,7 +5,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" //loads postgres driver
-	"goloang.org/x/crypto/bcrypt"                // used for hashing passwords
+	"golang.org/x/crypto/bcrypt"                 // used for hashing passwords
 )
 
 var (
@@ -14,7 +14,10 @@ var (
 	// ErrInvalidId is returned when an invalid ID is provided to a method like
 	// Delete.
 	ErrInvalidID = errors.New("models: ID provided was invalid")
-	userPwPepper = "secret-random-string"
+	// ErrInvalidPassword is returned when an invalid password is used when
+	// attempting to authenticate a user.
+	ErrInvalidPassword = errors.New("models: incorrect password provided")
+	userPwPepper       = "secret-random-string"
 )
 
 // This is the struct for the User model and contains what attributes(fields) we
@@ -137,6 +140,36 @@ func (us *UserService) ByEmail(email string) (*User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+// This method can be used to authenticate a user with the provided email
+// address and password.
+// If email provided is invalid, this will return nil, ErrNotFound.
+// If password provided is invalid, this will return nil, ErrInvalidPassword.
+// If email and password are both valid, this will return user, nil.
+// If another error is encountered, this will return nil, error.
+func (us *UserService) Authenticate(email, password string) (*User, error) {
+	// ByEmail method returns ErrNotFound, so we just check if that error is present.
+	foundUser, err := us.ByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+	// This function accepts 2 parameters - hashed password and cleartext password
+	// provided. Both need to be byte slices. Also need to add pepper to cleartext
+	// password as that was added before the hashing so it's needed to validate
+	// the cleartexr password.
+	err = bcrypt.CompareHashAndPassword(
+		[]byte(foundUser.PasswordHash), []byte(password+userPwPepper))
+	// Check the error return by the password comparison and either return user,
+	// invalid password error, or a different error.
+	switch err {
+	case nil:
+		return foundUser, nil
+	case bcrypt.ErrMismatchedHashAndPassword:
+		return nil, ErrInvalidPassword
+	default:
+		return nil, err
+	}
 }
 
 // This function is used to query the database given and return the First record

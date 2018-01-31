@@ -1,0 +1,117 @@
+Authenticate Returning Users:
+-- Create Login Template :
+	+ In order to authenticate users we are going to have a user fill out a log
+		in form, parse the data, then verify the email address and password 
+		provided is correct. Remembering users will come later
+	+ Create login.gohtml file in the users folder under views to have a form
+		like signUp form but only ask for email address and password (no name),
+		wrap it in a panel like the signup page, and make sure it POST to /login
+-- Create login action :
+	+ User login/logout "sessions" are being stored in the Users controller
+		as they are related to users and don't have to be in their own
+		controller
+	+ Update Users controller to have a view for the Login page 
+		type Users struct {
+			NewView *views.View
+			LoginView *views.View
+			us *models.UserService
+		}
+	+ Update NewUsers function to parse the template
+		func NewUsers(us *models.UserService) *Users {
+			return &Users{
+				NewView: views.NewView("bootstrap", "users/new"),
+				LoginView: views.NewView("bootstrap", "users/login"),
+				us:      us,
+			}
+		}
+	+ Create a method to parse the information in the login form
+		type LoginForm struct {
+			Email string `schema:"email"`
+			Password string `schema:"password"`
+		}
+
+		func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
+			form := LoginForm{}
+			if err := parseForm(r, &form); err !=nil {
+				panic(err)
+			}
+		}
+	+ Update router to inform it of the new pages (login GET and POST)
+		-- Use Handle instead of HandleFunc to render the login webpage like a 
+			static page using the parsed templates stored in the controller
+
+			r.Handle("/login", usersC.LoginView).Methods("GET")
+		-- Use HandlFunc to run the Login method to parse the form information
+			submitted 
+
+			r.HandleFunc("/login", usersC.Login).Methods("POST")
+	+ Update navbar to include link to login page
+		<ul class="nav navbar-nav navbar-right">
+        	<li><a href="/login">Log In</a></li>
+        	<li><a href="/signup">Sign Up</a></li>
+      	</ul>
+-- Create and Implement Authenticate method :
+	+ Going to do one thing - take in email address and cleartext password, then
+		return either a user that matches or an error explaining why a match
+		could not be found.
+		-- NOT responsible for creating a session, altering cookies, etc. That
+			responsibility will be in whatever code calls the authenticate
+			method
+	+ Create new error message for invalid password (already have one for ID):
+		-- ErrInvalidPassword is returned when an invalid password is used when 
+			attempting to authenticate a user.
+		ErrInvalidPassword = errors.New("models: incorrect password provided")
+	+ Create method:
+		-- This method can be used to authenticate a user with the provided email
+			address and password.
+		-- If email provided is invalid, this will return nil, ErrNotFound.
+		-- If password provided is invalid, this will return nil, ErrInvalidPassword.
+		-- If email and password are both valid, this will return user, nil.
+		-- If another error is encountered, this will return nil, error.
+
+		func (us *UserService) Authenticate(email, password string) (*User, error) {
+			foundUser, err := us.ByEmail(email)
+			if err != nil {
+				return nil, err
+			}
+			err = bcrypt.CompareHashAndPassword(
+				[]byte(foundUser.PasswordHash), []byte(password+userPwPepper))
+
+			switch err {
+			case nil:
+				return foundUser, nil
+			case bcrypt.ErrMismatchedHashAndPassword:
+				return nil, ErrInvalidPassword
+			default:
+				return nil, err
+			}
+		}
+		-- ByEmail method returns ErrNotFound, so we just check if that error is
+			present.
+		-- Compare function accepts 2 parameters - hashed password and cleartext
+			password provided. Both need to be byte slices. Also need to add 
+			pepper to cleartext password as that was added before the hashing so
+			it's needed to validate the cleartexr password.
+		-- Check the error return by the password comparison and either return 
+			user, invalid password error, or a different error.
+-- Use the Authenticate method when logging in :
+	+ Update User controller Login method to use Authenticate method to verify
+		the submitted information via the login webpage
+
+		func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
+			form := LoginForm{}
+			if err := parseForm(r, &form); err != nil {
+				panic(err)
+			}
+			user, err := u.us.Authenticate(form.Email, form.Password)
+			switch err {
+			case models.ErrNotFound:
+				fmt.Fprintln(w, "Invalid email address.")
+			case models.ErrInvalidPassword:
+				fmt.Fprintln(w, "Invalid Password provided.")
+			case nil:
+				fmt.Fprintln(w, user)
+			default:
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+		}
