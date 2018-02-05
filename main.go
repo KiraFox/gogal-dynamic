@@ -17,7 +17,7 @@ const (
 	port     = 5432
 	user     = "user"
 	password = "password"
-	dbname   = "databasename"
+	dbname   = "database"
 )
 
 func main() {
@@ -51,6 +51,7 @@ func main() {
 	// page
 	r.Handle("/login", usersC.LoginView).Methods("GET")
 	r.HandleFunc("/login", usersC.Login).Methods("POST")
+	r.HandleFunc("/cookietest", usersC.CookieTest).Methods("GET")
 	r.NotFoundHandler = nf
 	http.ListenAndServe(":3000", r)
 }

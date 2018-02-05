@@ -1,0 +1,45 @@
+Create and View Cookies:
+
+--Create Cookie using Go:
+	+ Use the net/http package using two steps:
+		-- Instantiate a Cookie, which is a type provided by the net/http package
+		-- Call the SetCookie function provided by the net/http package, passing
+			in both a ResponseWriter and the Cookie we just created
+	+ Beware of Invalid Cookies:
+		-- If you have trouble with cookies not saving, be sure to double check 
+			that the cookie is valid.
+		-- SetCookie function states that "Invalid cookies may be dropped"
+		-- May not see an error when an invalid cookie is saved, and code may
+			continue as if there was nothing wrong.
+	+ Cookies have details we can configure, such as securing them (which comes
+		later).
+		-- Basic details are a key and a value associated to that key
+	+ Update Login method in User's controller file:
+		-- Put the error handling logic in an if statement and tell the function
+			to return at the end of the if statement to return any errors to us
+			instead of continuing with an unverified user
+		-- Next create a Cookie (using the net/http package) using the key (Name)
+			"email"	and the value will be the email address of the user returned
+			by the Authenticate method before it. Be sure to put it after the
+			error handling.
+		-- Use the SetCookie function to save/persist the cookie.
+-- View Cookie using Go:
+	+ Call the Cookie method implemented by the http.Request objecy to access
+		cookies we set in past web requests
+	+ Create action on User's controller that uses the Cookie method and retrieve
+		the cookie we created in the Login handler
+	+ Once the cookie is retrieved, print it out to the screen so we can see any
+		of the information set on the cookie
+
+		func (u *Users) CookieTest(w http.ResponseWriter, r *http.Request) {
+			cookie, err := r.Cookie("email")
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+			fmt.Fprintln(w, "Email is:", cookie.Value)
+		}
+
+	+ Add the new handler (CookieTest) to the router. 
+		r.HandleFunc("/cookietest", usersC.CookieTest).Methods("GET")
+	+ USE IN DEV ONLY: Use this for testing purposes to check that your cookies
+		are doing what you want.

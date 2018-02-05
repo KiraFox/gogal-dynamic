@@ -83,16 +83,39 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 	// form and print out information based on if or what error is encountered
 	// when verifying the submitted information
 	user, err := u.us.Authenticate(form.Email, form.Password)
-	switch err {
-	case models.ErrNotFound:
-		fmt.Fprintln(w, "Invalid email address.")
-	case models.ErrInvalidPassword:
-		fmt.Fprintln(w, "Invalid Password provided.")
-	case nil:
-		fmt.Fprintln(w, user)
-	default:
+	if err != nil {
+		switch err {
+		case models.ErrNotFound:
+			fmt.Fprintln(w, "Invalid email address.")
+		case models.ErrInvalidPassword:
+			fmt.Fprintln(w, "Invalid Password provided.")
+		case nil:
+			fmt.Fprintln(w, user)
+		default:
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+	// Create cookie with the key "email" and value of the authenticated user's
+	// email address. Then save (SetCookie) the cookie.
+	cookie := http.Cookie{
+		Name:  "email",
+		Value: user.Email,
+	}
+	http.SetCookie(w, &cookie)
+	fmt.Fprintln(w, user)
+}
+
+// This method is used to display cookies set on the current user
+func (u *Users) CookieTest(w http.ResponseWriter, r *http.Request) {
+	// Use the Name field of the cookie you want to see the values of and check
+	// for errors to see if the cookie was located then print out the values we
+	// are checking.
+	cookie, err := r.Cookie("email")
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+	fmt.Fprintln(w, "Email is:", cookie.Value)
 }
 
 // This is the struct to hold the information submitted using the Signup form on

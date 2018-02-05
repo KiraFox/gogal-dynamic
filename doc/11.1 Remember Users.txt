@@ -1,0 +1,16 @@
+Remember Users:
+-- Stateless Server: when a user visits the web app, it has no knowledge
+	of who that user is. Server sees a single web request and expects all details
+	of the request are contained within it. 
+	+ Highly scalable web app because it doesn't matter which server the request
+		goes to.
+	+ Have user tell you who they are in every request, instead of "remembering"
+		or storing any actual state
+	+ Make sure to use ways to verify the user is telling the truth
+-- Cookies:
+	+ Basic definition is data that is stored on a user's computer
+	+ Visiting website that creates a cookie stores the file on your computer
+	+ Browser will automatically include cookies the website has permission to
+		access
+	+ Use cookies to remember users, secure the cookies, and limit user access
+		to pages using data in the cookies
