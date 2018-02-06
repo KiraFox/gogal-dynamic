@@ -1,0 +1,24 @@
+Secure Your Cookies:
+
+-- 5 Major Attack vectors regarding cookies:
+	+ Cookie tampering
+	+ Database leak allowing users to create fake cookies
+	+ Cross site scripting (XSS)
+	+ Cookie theft via packet sniffing
+	+ Cookie theft via physical access to device cookie is stored on
+
+-- Cookie Tampering:
+	+ Since cookies are stored on the user's computer they can tamper with the
+		cookie.
+	+ Digitally sign the data you store in the cookie to help prevent tampering.
+		-- This can be done by creating signature to attach to the cookie using
+			a hashing function (such as HMAC, JSON Web Tokens).
+		-- Validate a user's cookie by hashing the data returned and compare it
+			to the hash stored in the cookie to see if they match
+	+ Obfuscating cookie data is another way to help prevent tamperings.
+		-- Rather than storing data that is easy to fake (ex: email, ID), we will
+			store a "remember token" that looks like gibberish and has no clear
+			mapping to users
+		-- Achieve this by generating a random string everytime a user logs in,
+			assigning that string to the user's remember token field, then when
+			the user logs in again we find the user via that field
