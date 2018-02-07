@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 
-	"github.com/KiraFox/gogal-dynamic/rand"
+	"github.com/KiraFox/gogal-dynamic/hash"
 )
 
 func main() {
-	// Testing our String function given 10 bytes
-	fmt.Println(rand.String(10))
-	// Testing our RememberToken function which uses a constant
-	fmt.Println(rand.RememberToken())
+	hmac := hash.NewHMAC("my-secret-key")
+	// This should print out:
+	//   4waUFc1cnuxoM2oUOJfpGZLGP1asj35y7teuweSFgPY=
+	fmt.Println(hmac.Hash("this is my string to hash"))
 }

@@ -22,3 +22,10 @@ Secure Your Cookies:
 		-- Achieve this by generating a random string everytime a user logs in,
 			assigning that string to the user's remember token field, then when
 			the user logs in again we find the user via that field
+		-- Hash your remember tokens so if someone gains access to the database
+			they can't manually create cookies and impersonate users.
+		-- Use HMAC (instead of bcrypt) for hashing the remember tokens. We use
+			this because bcrypt automatically adds a salt to the hash. With
+			remember tokens we need to generate the hash stored in the database
+			before we do a query but that isn't possible with bcrypt unless you
+			know the salt that was used (which you can't in this order of ops).

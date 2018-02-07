@@ -1,0 +1,88 @@
+Hashing Remember Tokens:
+
+-- Hash package in Go:
+	+ Look at the Hash interface in the hash package, which there are many ways
+		to use it.
+	+ Example: we have some data we want to hash and an implementation of the
+		hash.Hash interface we can do something like:
+
+		var data []byte
+		var h hash.Hash
+		h.Reset()
+		h.Write(data)
+		hashedData := h.Sum(nil)
+
+		-- We call the Reset of Hash type to bring it back to whatever it was
+			when we first intiliazed  it in our code
+		-- Then Write our "data" to the Hash type so it knows what we want hashed
+		-- Then use Sum to request the "hash value" (therefor actually hash what
+			is stored in our Hash type) of what is stored in the Hash
+			type for us and store the result in a variable (hashedData)
+		-- Use nil in the Sum function because we aren't wanting append the
+			current hash we have stored to anything else, just want the current 
+			hash value of the Hash type we wrote saved to a variable
+-- Use crypto/hmac package in Go:
+	+ HMAC is a cryptographic hash that uses a key to sign a message. 
+	+ HMAC generation uses two passes of hash computation. The secret key is 
+		first used to derive two keys – inner and outer. The first pass of the
+		algorithm produces an internal hash derived from the message and the 
+		inner key. The second pass produces the final HMAC code derived from the
+		inner hash result and the outer key.
+	+ crypto/hmac package in Go has a New function which takes in:
+		-- a function that returns a Hash type itself (func() hash.Hash). This
+			parameter is the how you actually want to hash the key and data.
+		-- a secret key ([]byte), 
+		-- then the New function returns a hash.Hash type that is filled with
+			the hashing digest you are going to use to actually hash the key
+			you provided it (that it is also holding), and hash the key + message
+			with later.
+	+ Example: 
+		mac := hmac.New(sha256.New, key)
+
+-- Create own hash package:
+	+ Write our own HMAC hashing code to wrap around a few existing packages so
+		we have a function to do exactly what we need to do in one place, and we
+		know exactly how the remember tokens are being hashed
+	+ Create new folder (hash) to contain our hashing code and create file (hmac.go)
+		to contain our HMAC specific hashing code
+	+ Since hashing returns a byte slice, we are using base64 encoding (like we
+		did during creating a remember token) so we can save the hash as a string
+	+ Define our HMAC type to hold a Hash type:
+		type HMAC struct {
+			hmac hash.Hash
+		}
+	+ Create function that creates and returns a HMAC object:
+		func NewHMAC(key string) HMAC {
+			h := hmac.New(sha256.New, []byte(key))
+			return HMAC{
+				hmac: h,
+			}
+		}
+
+		-- New function from crypto/hmac returns a hash.Hash which is what we
+			need for our HMAC type
+		-- Provide it the key converted into a byte slice to sign with, and the
+			type of hashing we want to use (SHA256)
+		-- Save the resulting Hash type to our HMAC object so we can use it to
+			sign and hash data written to it later
+	+ Create function that takes input data and hashes it according our HMAC object:
+		func (h HMAC) Hash(input string) string {
+			h.hmac.Reset()
+			h.hmac.Write([]byte(input))
+			b := h.hmac.Sum(nil)
+			return base64.URLEncoding.EncodeToString(b)
+		}
+
+		-- Reset our HMAC object's "hmac" field to set it back to whatever value
+			it had when we intialized it in our code before calling this method;
+			this means back to whatever NewHMAC we created most recently so we
+			can use the same HMAC hash on new data each time; this means we
+			will get the same result each time we use the same key and the same
+			data
+		-- Write the converted input to the HMAC object to add to the message
+			into the Hash type (SHA256 digest) so it now has the key + message
+			stored in it
+		-- Sum(nil) means we are actually hashing the contents that have been
+			stored in our HMAC object, and saving the results of the hashing to
+			the variable (b)
+		-- Return the hash as an encoded string
