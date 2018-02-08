@@ -1,0 +1,117 @@
+Hashing Remember Tokens in User Service:
+
+-- Add Remember Tokens to User type:
+	type User struct {
+		gorm.Model
+		Name         string
+		Email        string `gorm:"not null;unique_index"`
+		Password     string `gorm:"-"`        // Raw user password, not saved
+		PasswordHash string `gorm:"not null"` // Hashed user password, saved
+		Remember string `gorm:"-"` // Raw remember token, not saved
+		RememberHash string `gorm:"not null;unique_index"` // Hashed remember token, saved 
+	}
+
+	+ Add fields to store the remember token (raw and hashed form), and make
+		sure the raw one is not saved in the database
+	+ Make sure to index the hashed remember tokens in the database so it is
+		quicker to lookup users by it when needed, and ensure 2+ users cannot
+		accidentally be given the same remember token
+-- Set a Remember Token when user is created:
+	+ Check if the Remember field is empty, and if so, set a remember token to it
+		-- We check this because we don't want to overwrite any tokens that are
+			already set
+
+	func (us *UserService) Create(user *User) error {
+		// ...
+		if user.Remember == "" {
+			token, err := rand.RememberToken()
+			if err != nil {
+				return err
+			}
+			user.Remember = token
+		}
+		// TODO: Hash remember token and set it on user.RememberHash
+
+-- Add HMAC field to User Service:
+	+ Once we have a remember token, we want to hash it and then save it. 
+	+ Reasons for not having the HMAC type in the Create method:
+		-- Doing so would mean storing the secret key somewhere the Create method
+			can access it every time we wanted to create an instance
+		-- Doing so creates the same instance over and over again with no benefit
+	+ Storing an instance of our HMAC type in a field in the UserService means
+		all the methods (such as Create) have access to it without needing to
+		know the secret key or reinitialize the same thing
+	+ Import our hash package and add a field to the UserService struct to hold
+		our HMAC object
+		type UserService struct {
+			db *gorm.DB 
+			hmac hash.HMAC
+		}
+	+ Set the hmac field using a constant (key) and updating the NewUserService
+		function to use it to set the hmac field for use while the UserService
+		is running
+
+		const hmacSecretKey = "secret-hmac-key"
+
+		func NewUserService(connectionInfo string) (*UserService, error) {
+			db, err := gorm.Open("postgres", connectionInfo)
+			if err != nil {
+				return nil, err
+			}
+
+			db.LogMode(true)
+
+			hmac := hash.NewHMAC(hmacSecretKey)
+
+			return &UserService{
+				db: db,
+				hmac: hmac,
+			}, nil
+		}
+
+		-- WARNING: only setting the secret key as a constant for developmental
+			purposes. This will be removed before production
+-- Hash Remember Tokens during Create/Update:
+	+ Update Create method to hash the token using the HMAC stored in the 
+		UserService
+
+		user.RememberHash = us.hmac.Hash(user.Remember)
+
+	+ Update "Update" method to check if the remember token was updated or not
+		- We don't want to update the remember hash if the remember token wasn't
+			updated.
+
+		func (us *UserService) Update(user *User) error {
+			if user.Remember != "" {
+				user.RememberHash = us.hmac.Hash(user.Remember)
+			}
+
+			return us.db.Save(user).Error
+		}
+-- Retrieve User via Remember Token:
+	+ This method looks up a user with the provided remember token and returns
+		that user.  
+	+ This method will handle hashing the provided token and searching the
+		database for the matching hash. 
+	+ GORM uses snake case of all fields it creates in the database, so 
+		remember_hash = RememberHash field.
+
+	func (us *UserService) ByRemember(token string) (*User, error) {
+		var user User
+		rememberHash := us.hmac.Hash(token)
+		err := first(us.db.Where("remember_hash = ?", rememberHash), &user)
+		if err != nil {
+			return nil, err
+		}
+		return &user, nil
+	}
+-- Test code in exp folder:
+	+ We need the set of constants that we use to connect to our database. We 
+		will then need to rebuild our database connection string, setup a user
+		service instance, and then interact with it.
+	+ Reset our users table
+	+ Create a new user and allow our user service to set the remember token
+	+ Verify that the remember token was set, and panic otherwise
+	+ Search for a user via the remember token to verify the ByRemember
+		method works and to verify that our remember token was persisted 
+		correctly

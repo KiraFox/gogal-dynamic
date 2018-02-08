@@ -3,6 +3,8 @@ package models
 import (
 	"errors"
 
+	"github.com/KiraFox/gogal-dynamic/hash"
+	"github.com/KiraFox/gogal-dynamic/rand"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" //loads postgres driver
 	"golang.org/x/crypto/bcrypt"                 // used for hashing passwords
@@ -20,14 +22,19 @@ var (
 	userPwPepper       = "secret-random-string"
 )
 
+// Key for our HMAC for hashing remember tokens. To be used in dev only
+const hmacSecretKey = "secret-hmac-key"
+
 // This is the struct for the User model and contains what attributes(fields) we
 // want to know(store) for each user of the application in the users table.
 type User struct {
 	gorm.Model
 	Name         string
 	Email        string `gorm:"not null;unique_index"`
-	Password     string `gorm:"-"`        // Raw user password, not saved
-	PasswordHash string `gorm:"not null"` // Hashed user password, saved
+	Password     string `gorm:"-"`                     // Raw user password, not saved
+	PasswordHash string `gorm:"not null"`              // Hashed user password, saved
+	Remember     string `gorm:"-"`                     // Raw remember token, not saved
+	RememberHash string `gorm:"not null;unique_index"` // Hashed remember token, saved
 }
 
 // This function opens a connection to a database (connectionInfo) and returns
@@ -43,8 +50,12 @@ func NewUserService(connectionInfo string) (*UserService, error) {
 	}
 
 	db.LogMode(true)
+	// This initializes our HMAC to be used for hashing remember tokens as needed.
+	hmac := hash.NewHMAC(hmacSecretKey)
+
 	return &UserService{
-		db: db,
+		db:   db,
+		hmac: hmac,
 	}, nil
 }
 
@@ -53,6 +64,7 @@ func NewUserService(connectionInfo string) (*UserService, error) {
 type UserService struct {
 	db *gorm.DB // The gorm.DB object we want to interact with instead of acting
 	// on the object directly throughout all our code.
+	hmac hash.HMAC
 }
 
 // This method closes the UserService database connection
@@ -82,7 +94,9 @@ func (us *UserService) DestructiveReset() error {
 // Input a pointer to the User model object, run bcrypt hashing on the Password
 // field from the model and check for errors.  If there are no errors, then save
 // the hashed password created in model's PasswordHash field and change the
-// password field to an empty string to clear the original one input.
+// password field to an empty string to clear the original one input. Next we
+// check if Remember field is empty, and if so, set a remember token value. Then
+// hash the remember token and save it.
 // Run the gorm.DB Create method on the modified user model to save the User
 // data to the database, and then return an error or nil if it runs successfully.
 func (us *UserService) Create(user *User) error {
@@ -94,12 +108,27 @@ func (us *UserService) Create(user *User) error {
 	}
 	user.PasswordHash = string(hashedBytes)
 	user.Password = ""
+
+	if user.Remember == "" {
+		token, err := rand.RememberToken()
+		if err != nil {
+			return err
+		}
+		user.Remember = token
+	}
+
+	user.RememberHash = us.hmac.Hash(user.Remember)
+
 	return us.db.Create(user).Error
 }
 
 // This method will update the provided user with all the data in the provided
 // User model object.
 func (us *UserService) Update(user *User) error {
+	if user.Remember != "" {
+		user.RememberHash = us.hmac.Hash(user.Remember)
+	}
+
 	return us.db.Save(user).Error
 }
 
@@ -136,6 +165,20 @@ func (us *UserService) ByEmail(email string) (*User, error) {
 	var user User
 	db := us.db.Where("email = ?", email)
 	err := first(db, &user)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// This method looks up a user with the provided remember token and returns that
+// user.  This method will handle hashing the provided token and searching the
+// database for the matching hash. GORM uses snake case of all fields it creates
+// in the database, so remember_hash = RememberHash field.
+func (us *UserService) ByRemember(token string) (*User, error) {
+	var user User
+	rememberHash := us.hmac.Hash(token)
+	err := first(us.db.Where("remember_hash = ?", rememberHash), &user)
 	if err != nil {
 		return nil, err
 	}

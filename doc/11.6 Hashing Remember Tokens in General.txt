@@ -1,4 +1,4 @@
-Hashing Remember Tokens:
+Hashing Remember Tokens in General:
 
 -- Hash package in Go:
 	+ Look at the Hash interface in the hash package, which there are many ways
