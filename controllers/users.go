@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/KiraFox/gogal-dynamic/models"
+	"github.com/KiraFox/gogal-dynamic/rand"
 	"github.com/KiraFox/gogal-dynamic/views"
 )
 
@@ -68,7 +69,15 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintln(w, "User is", user)
+	// Sign the newly created user in using the signIn method
+	// Temporarily renders error message for debugging and redirects to the
+	// cookie test page to make sure the signIn worked and cookie was set
+	err := u.signIn(w, &user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/cookietest", http.StatusFound)
 }
 
 // This method is used to process the Login form when a user tries to login to
@@ -96,26 +105,62 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	// Create cookie with the key "email" and value of the authenticated user's
-	// email address. Then save (SetCookie) the cookie.
-	cookie := http.Cookie{
-		Name:  "email",
-		Value: user.Email,
+
+	// Sign the newly created user in using the signIn method
+	// Temporarily renders error message for debugging and redirects to the
+	// cookie test page to make sure the signIn worked and cookie was set
+	err = u.signIn(w, user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	http.SetCookie(w, &cookie)
-	fmt.Fprintln(w, user)
+	http.Redirect(w, r, "/cookietest", http.StatusFound)
 }
 
 // This method is used to display cookies set on the current user
 func (u *Users) CookieTest(w http.ResponseWriter, r *http.Request) {
 	// Use the Name field of the cookie you want to see the values of and check
-	// for errors to see if the cookie was located then print out the values we
-	// are checking.
-	cookie, err := r.Cookie("email")
+	// for errors to see if the cookie was located.
+	cookie, err := r.Cookie("remember_token")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	fmt.Fprintln(w, "Email is:", cookie.Value)
+
+	// Use this cookie's value to search for a user in our database. We are using
+	// the ByRemember method search that we created for the UserService
+	user, err := u.us.ByRemember(cookie.Value)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	fmt.Fprintln(w, user)
+}
+
+// This method is used to sign the given user in via cookies
+func (u *Users) signIn(w http.ResponseWriter, user *models.User) error {
+	// Check if a raw remember token is set: if not set - generate a new remember
+	// token then update the user; otherwise use the remember token that is
+	// already set for the user
+	if user.Remember == "" {
+		token, err := rand.RememberToken()
+		if err != nil {
+			return err
+		}
+		user.Remember = token
+		err = u.us.Update(user)
+		if err != nil {
+			return err
+		}
+	}
+	// Use the remember token to create a cookie and set it using the http
+	// package along with the response writer
+	cookie := http.Cookie{
+		Name:  "remember_token",
+		Value: user.Remember,
+	}
+	http.SetCookie(w, &cookie)
+
+	return nil
 }
 
 // This is the struct to hold the information submitted using the Signup form on

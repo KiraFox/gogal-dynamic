@@ -1,0 +1,103 @@
+Using Remember Tokens in Cookies:
+
+-- Store Remember Token in Cookies:
+	+ Steps to Sign in a user - 
+		-- Generate a remember token for the user if a raw one isn't available
+		-- Update the user account in our database with a new remember token
+		-- Store the remember token in a cookie so we know who that user is on
+			subsequent web requests
+		-- Do this anytime a user creates a new account or logs in
+	+ Create Sign In method -
+		-- Put this method in the user's controller since it will only be used
+			when users log in or create accounts
+		-- signIn method has 2 arguments:
+			+ http ResponseWriter: for setting the user's cookie
+			+ *models.User: user we want to sign in and update remember token
+		-- Return an error if there is one
+		-- Check if a raw remember token is set: 
+			+ if not set - generate a new remember token then update the user
+			+ otherwise use the remember token that is already set for the user
+		-- Use the remember token to create a cookie and set it using the http
+			package along with the response writer
+		-- Return nil at the end as there were no errors if the method completes
+
+		func (u *Users) signIn(w http.ResponseWriter, user *models.User) error {
+			if user.Remember == "" {
+				token, err := rand.RememberToken()
+				if err != nil {
+					return err
+				}
+				user.Remember = token
+				err = u.us.Update(user)
+				if err != nil {
+					return err
+				}
+			}
+
+			cookie := http.Cookie{
+				Name: "remember_token",
+				Value: user.Remember,
+			}
+			http.SetCookie(w, &cookie)
+
+			return nil
+		}
+	+ Update log in and sign up methods to call the signIn method after a user
+		successfully creates an account or logs in
+
+		func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
+			// ... This remains unchanged
+			// Delete the fmt.Fprintln
+
+			// Sign the newly created user in using the signIn method
+			// Temporarily renders error message for debugging and redirects to the
+			// cookie test page to make sure the signIn worked and cookie was set
+			err := u.signIn(w, &user)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			http.Redirect(w, r, "/cookietest", http.StatusFound)
+		}
+
+		func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
+			// ... This remains unchanged
+			// Delete the cookie creation (cookie := http.Cookie, etc) and Fprintln
+
+			// Sign the newly created user in using the signIn method
+			// Temporarily renders error message for debugging and redirects to the
+			// cookie test page to make sure the signIn worked and cookie was set
+			err = u.signIn(w, user)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			http.Redirect(w, r, "/cookietest", http.StatusFound)
+		}
+
+-- Restrict Access via Cookie:
+	+ Long term we want to redirect people that aren't logged in to the log in
+		page if they are trying to access restricted parts of the site
+	+ For now, we are showing an error message to verify the code is working 
+	+ Update the CookieTest method:
+		-- Use the Name field of the cookie you want to see the values of and 
+			check for errors to see if the cookie was located.
+		-- Use this cookie's value to search for a user in our database. We are 
+			using the ByRemember method search that we created for the UserService 
+		-- Print out the user to confirm we have the correct one
+		
+		func (u *Users) CookieTest(w http.ResponseWriter, r *http.Request) {
+	
+			cookie, err := r.Cookie("remember_token")
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+
+	
+			user, err := u.us.ByRemember(cookie.Value)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+
+			fmt.Fprintln(w, user)
+		}
