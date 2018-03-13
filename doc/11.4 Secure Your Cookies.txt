@@ -48,3 +48,30 @@ Secure Your Cookies:
 		-- Loosen security when necessary: Err on side of caution and keep as
 			many restrictions as possible (especially like cookies) until it
 			becomes absolutely necessary to remove a restriction.
+
+-- Packet Sniffing:
+	+ Occurs when someone manages to intercept your web requests and steal data
+		from them before forwarding them along to where they go
+	+ Only real solution is to serve your application over SSL/TLS (https)
+	+ This will be gone over later closer to deployment, but make sure whenever
+		you are doing deployments in the future that they are secure in this
+		regard
+
+-- Physical Theft:
+	+ Unable to prevent this from the web application end
+	+ Make it easy for a user to invalidate all existing sessions
+	+ Our application does this by changing the RememberToken every time a user
+		logs in - so all a user needs to do is log in with a new device so all
+		past cookies are invalidated
+	+ There are other approaches such as session expirations that can be looked
+		into if you wish
+
+-- Cross-site Request Forgery (CSRF):
+	+ Occures when unauthorized commands are transmitted from a user that the web
+		application trusts.
+	+ Unlike cross-site scripting (XSS), which exploits the trust a user has for
+		a particular site, CSRF exploits the trust that a site has in a user's
+		browser
+	+ We will implement CSRF tokens later when preparing for production to prevent
+		this kind of attack
+		
