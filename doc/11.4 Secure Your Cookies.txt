@@ -29,3 +29,22 @@ Secure Your Cookies:
 			remember tokens we need to generate the hash stored in the database
 			before we do a query but that isn't possible with bcrypt unless you
 			know the salt that was used (which you can't in this order of ops).
+
+-- Cross Site Scripting (XSS):
+	+ Type of attack where bad parties attempt to inject JavaScript code into a
+		web application and have it run as if the web application provided it
+	+ Example: someone creates an account with the username being a JavaScript
+		code to do something in particular, and if it were able to make web 
+		requests to the server, the user's cookies would be attached to those
+		request by default, so the JS could impersonate the user without the user
+		knowing. So now when you visit my user profile, the code would get 
+		executed and I would have access to all of your resources.
+	+ We are using the html/template package to mitigate this (remember: encoding 		text in html templates so that it can’t execute.)
+	+ Extra precautions that can be taken: 
+		-- If not using a JS framework, or if you don't intend to make web 
+			requests with your JavaScript, then you don't need to give scripts
+			access to your cookies (especially authentication cookies).
+		-- Limit cookies to only browser-intiated web requests
+		-- Loosen security when necessary: Err on side of caution and keep as
+			many restrictions as possible (especially like cookies) until it
+			becomes absolutely necessary to remove a restriction.

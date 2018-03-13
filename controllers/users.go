@@ -155,8 +155,9 @@ func (u *Users) signIn(w http.ResponseWriter, user *models.User) error {
 	// Use the remember token to create a cookie and set it using the http
 	// package along with the response writer
 	cookie := http.Cookie{
-		Name:  "remember_token",
-		Value: user.Remember,
+		Name:     "remember_token",
+		Value:    user.Remember,
+		HttpOnly: true, // Tells this cookie that it is NOT accessible to scripts
 	}
 	http.SetCookie(w, &cookie)
 
